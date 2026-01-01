@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, MapPin, Flame, Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
+import stickPickHero from "@/assets/stick-pick-hero.jpg";
 
 interface Cigar {
   id: string;
@@ -75,21 +76,29 @@ export function StickPickOfWeek() {
   return (
     <div className="mx-2 mb-6 stagger-item">
       <div className="card-elevated overflow-hidden">
-        {/* Header badge */}
-        <div className="relative bg-gradient-to-r from-primary/20 via-primary/10 to-transparent px-5 py-3 border-b border-border/30">
-          <div className="flex items-center gap-2">
+        {/* Hero image */}
+        <div className="relative h-44 w-full overflow-hidden">
+          <img 
+            src={stickPickHero} 
+            alt="Featured cigar" 
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+          
+          {/* Badge overlay */}
+          <div className="absolute top-3 left-3 flex items-center gap-2 glass rounded-full px-3 py-1.5">
             <div className="relative">
-              <Sparkles className="h-5 w-5 text-primary animate-pulse-ember" />
-              <div className="absolute inset-0 blur-md bg-primary/40" />
+              <Sparkles className="h-4 w-4 text-primary animate-pulse-ember" />
             </div>
-            <span className="text-sm font-bold text-primary tracking-wide uppercase">
-              Stick Pick of the Week
+            <span className="text-xs font-bold text-primary tracking-wide uppercase">
+              Pick of the Week
             </span>
           </div>
+
           {/* Decorative ember particles */}
-          <div className="absolute top-2 right-8 h-1.5 w-1.5 rounded-full bg-primary/60 animate-float" style={{ animationDelay: '0s' }} />
-          <div className="absolute top-4 right-4 h-1 w-1 rounded-full bg-primary/40 animate-float" style={{ animationDelay: '0.5s' }} />
-          <div className="absolute bottom-2 right-12 h-1 w-1 rounded-full bg-primary/50 animate-float" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-6 right-8 h-1.5 w-1.5 rounded-full bg-primary/60 animate-float" style={{ animationDelay: '0s' }} />
+          <div className="absolute top-10 right-4 h-1 w-1 rounded-full bg-primary/40 animate-float" style={{ animationDelay: '0.5s' }} />
+          <div className="absolute bottom-16 right-12 h-1 w-1 rounded-full bg-primary/50 animate-float" style={{ animationDelay: '1s' }} />
         </div>
 
         {/* Content */}
