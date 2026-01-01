@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { SmokeLogCard } from "@/components/SmokeLogCard";
+import { StickPickOfWeek } from "@/components/StickPickOfWeek";
 import { CameraCapture } from "@/components/CameraCapture";
 import { Loader2, Plus } from "lucide-react";
 
@@ -154,6 +155,9 @@ export default function Feed() {
             Latest smoke logs from the community
           </p>
         </div>
+
+        {/* Stick Pick of the Week */}
+        <StickPickOfWeek />
 
         <div className="px-2">
           {loading ? (
