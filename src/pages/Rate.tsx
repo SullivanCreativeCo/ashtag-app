@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Loader2, ArrowLeft } from "lucide-react";
+import { Search, Plus, Loader2, ArrowLeft, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Cigar {
@@ -21,17 +21,28 @@ interface Cigar {
   strength_profile: string | null;
 }
 
+interface LocationState {
+  capturedImage?: string;
+  selectedCigarId?: string;
+}
+
 export default function Rate() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const locationState = location.state as LocationState | null;
+  const capturedImage = locationState?.capturedImage || null;
+  const preselectedCigarId = locationState?.selectedCigarId || null;
   
-  const [step, setStep] = useState<"search" | "log">("search");
+  const [step, setStep] = useState<"search" | "log">(preselectedCigarId ? "log" : "search");
   const [searchQuery, setSearchQuery] = useState("");
   const [cigars, setCigars] = useState<Cigar[]>([]);
   const [selectedCigar, setSelectedCigar] = useState<Cigar | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingPreselected, setLoadingPreselected] = useState(!!preselectedCigarId);
 
   // Log form state
   const [construction, setConstruction] = useState(3);
@@ -45,6 +56,28 @@ export default function Rate() {
       navigate("/auth");
     }
   }, [user, navigate]);
+
+  // Load preselected cigar if coming from match flow
+  useEffect(() => {
+    if (preselectedCigarId) {
+      loadPreselectedCigar(preselectedCigarId);
+    }
+  }, [preselectedCigarId]);
+
+  const loadPreselectedCigar = async (cigarId: string) => {
+    setLoadingPreselected(true);
+    const { data, error } = await supabase
+      .from("cigars")
+      .select("id, brand, line, vitola, wrapper, strength_profile")
+      .eq("id", cigarId)
+      .single();
+
+    if (!error && data) {
+      setSelectedCigar(data);
+      setStep("log");
+    }
+    setLoadingPreselected(false);
+  };
 
   useEffect(() => {
     const searchCigars = async () => {
@@ -130,14 +163,46 @@ export default function Rate() {
 
   const overallScore = ((construction + flavor + strength + burn) / 4).toFixed(1);
 
+  if (loadingPreselected) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="py-4">
         {step === "search" ? (
           <div className="space-y-6">
-            <h1 className="font-display text-2xl font-bold text-foreground">
-              Rate a Cigar
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="font-display text-2xl font-bold text-foreground">
+                Rate a Cigar
+              </h1>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/match-cigar")}
+                className="gap-2"
+              >
+                <Camera className="h-4 w-4" />
+                Scan Band
+              </Button>
+            </div>
+
+            {/* Show captured image if available */}
+            {capturedImage && (
+              <div className="rounded-xl overflow-hidden border border-border">
+                <img 
+                  src={capturedImage} 
+                  alt="Captured cigar band" 
+                  className="w-full h-32 object-cover"
+                />
+              </div>
+            )}
 
             {/* Search Input */}
             <div className="relative">

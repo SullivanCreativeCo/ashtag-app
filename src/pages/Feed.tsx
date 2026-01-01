@@ -47,8 +47,8 @@ export default function Feed() {
   }, [user]);
 
   const handleCameraCapture = (imageData: string) => {
-    // Navigate to rate page with the captured image
-    navigate("/rate", { state: { capturedImage: imageData } });
+    // Navigate to match page with the captured image
+    navigate("/match-cigar", { state: { capturedImage: imageData } });
   };
 
   const fetchLogs = async () => {

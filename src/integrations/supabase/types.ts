@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      cigar_band_images: {
+        Row: {
+          cigar_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+        }
+        Insert: {
+          cigar_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+        }
+        Update: {
+          cigar_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cigar_band_images_cigar_id_fkey"
+            columns: ["cigar_id"]
+            isOneToOne: false
+            referencedRelation: "cigars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cigar_requests: {
         Row: {
           created_at: string
