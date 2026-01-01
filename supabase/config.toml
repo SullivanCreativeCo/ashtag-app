@@ -1,1 +1,4 @@
 project_id = "jxulfosxcpjtqsoerdgg"
+
+[functions.match-cigar-band]
+verify_jwt = false

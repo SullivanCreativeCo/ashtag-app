@@ -9,6 +9,7 @@ import Feed from "./pages/Feed";
 import Rate from "./pages/Rate";
 import Humidor from "./pages/Humidor";
 import NearMe from "./pages/NearMe";
+import MatchCigar from "./pages/MatchCigar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/rate" element={<Rate />} />
+            <Route path="/match-cigar" element={<MatchCigar />} />
             <Route path="/humidor" element={<Humidor />} />
             <Route path="/near-me" element={<NearMe />} />
             <Route path="*" element={<NotFound />} />
