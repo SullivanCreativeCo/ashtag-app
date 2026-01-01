@@ -103,6 +103,38 @@ export default {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        "smoke-drift": {
+          "0%": { 
+            opacity: "0", 
+            transform: "translateY(0) translateX(0) scale(1)" 
+          },
+          "20%": { 
+            opacity: "0.4" 
+          },
+          "80%": { 
+            opacity: "0.2" 
+          },
+          "100%": { 
+            opacity: "0", 
+            transform: "translateY(-60px) translateX(20px) scale(1.5)" 
+          },
+        },
+        "smoke-drift-alt": {
+          "0%": { 
+            opacity: "0", 
+            transform: "translateY(0) translateX(0) scale(1)" 
+          },
+          "25%": { 
+            opacity: "0.3" 
+          },
+          "75%": { 
+            opacity: "0.15" 
+          },
+          "100%": { 
+            opacity: "0", 
+            transform: "translateY(-50px) translateX(-15px) scale(1.3)" 
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -110,6 +142,8 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         shimmer: "shimmer 2s linear infinite",
+        "smoke-drift": "smoke-drift 4s ease-out infinite",
+        "smoke-drift-alt": "smoke-drift-alt 5s ease-out infinite",
       },
     },
   },
