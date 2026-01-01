@@ -144,65 +144,69 @@ export default function Feed() {
 
   return (
     <AppLayout>
-      <div className="space-y-5 py-4 px-1 pb-20">
-        <div className="px-1">
-          <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
+      <div className="space-y-5 pb-24">
+        {/* Sticky header */}
+        <div className="sticky top-0 z-40 -mx-1 px-4 py-4 header-blur">
+          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
             Stick Pics
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-1">
             Latest smoke logs from the community
           </p>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="relative">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <div className="absolute inset-0 h-8 w-8 animate-ping opacity-20 rounded-full bg-primary" />
+        <div className="px-2">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="relative">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <div className="absolute inset-0 h-10 w-10 animate-ping opacity-20 rounded-full bg-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground animate-pulse">Loading the latest smokes...</p>
             </div>
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="card-elevated flex flex-col items-center justify-center py-16 text-center mx-1">
-            <div className="mb-4 rounded-2xl bg-muted/50 p-5">
-              <svg
-                className="h-10 w-10 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+          ) : logs.length === 0 ? (
+            <div className="card-elevated flex flex-col items-center justify-center py-20 text-center">
+              <div className="mb-5 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 p-6">
+                <svg
+                  className="h-12 w-12 text-primary animate-glow"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-display font-bold text-foreground">No smoke logs yet</h3>
+              <p className="mt-2 text-sm text-muted-foreground max-w-[240px]">
+                Be the first to share your cigar experience with the community!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {logs.map((log) => (
+                <SmokeLogCard
+                  key={log.id}
+                  log={log}
+                  onLikeToggle={handleLikeToggle}
                 />
-              </svg>
+              ))}
             </div>
-            <h3 className="text-lg font-semibold text-foreground">No smoke logs yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground max-w-[200px]">
-              Be the first to share your cigar experience!
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {logs.map((log) => (
-              <SmokeLogCard
-                key={log.id}
-                log={log}
-                onLikeToggle={handleLikeToggle}
-              />
-            ))}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Floating Action Button */}
       <button
         onClick={() => setCameraOpen(true)}
-        className="fab"
+        className="fab animate-float"
         aria-label="Add smoke log"
       >
-        <Plus className="h-6 w-6 text-white" />
+        <Plus className="h-7 w-7 text-white drop-shadow-lg" />
       </button>
 
       {/* Camera Capture Modal */}

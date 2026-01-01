@@ -14,7 +14,7 @@ const navItems = [
     path: "/rate",
   },
   {
-    label: "My Humidor",
+    label: "Humidor",
     icon: DoorOpen,
     path: "/humidor",
   },
@@ -31,7 +31,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass safe-bottom">
-      <div className="mx-auto flex max-w-lg items-center justify-around py-1">
+      <div className="mx-auto flex max-w-lg items-stretch justify-around">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -46,19 +46,20 @@ export function BottomNav() {
               )}
             >
               <div className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200",
-                isActive && "bg-primary/10"
+                "flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-300",
+                isActive ? "bg-primary/15 scale-110" : "hover:bg-muted/50"
               )}>
                 <Icon
                   className={cn(
-                    "h-5 w-5 transition-all duration-200",
+                    "h-6 w-6 transition-all duration-300",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
+                  strokeWidth={isActive ? 2.5 : 2}
                 />
               </div>
               <span
                 className={cn(
-                  "text-[10px] font-medium tracking-wide transition-colors",
+                  "text-[11px] font-semibold tracking-wide transition-all duration-300 mt-0.5",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
               >

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageCircle, MoreHorizontal, Flag } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Flag, Share2, Bookmark } from "lucide-react";
 import { LitMatchDisplay } from "./LitMatchRating";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,8 @@ interface SmokeLogCardProps {
 export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
   const { user } = useAuth();
   const [isLiking, setIsLiking] = useState(false);
+  const [showFullNotes, setShowFullNotes] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleLike = async () => {
     if (!user || isLiking) return;
@@ -55,19 +57,29 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
     setIsLiking(false);
   };
 
+  const handleDoubleTap = () => {
+    if (!log.user_has_liked && user) {
+      handleLike();
+    }
+  };
+
   return (
-    <div className="card-elevated card-press stagger-item">
+    <div className="card-elevated stagger-item group">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 ring-2 ring-border/50">
-            <AvatarImage src={log.profile.avatar_url || undefined} />
-            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-sm font-medium text-primary">
-              {(log.profile.display_name || "U")[0].toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="h-11 w-11 ring-2 ring-primary/20 transition-all duration-300 group-hover:ring-primary/40">
+              <AvatarImage src={log.profile.avatar_url || undefined} />
+              <AvatarFallback className="bg-gradient-to-br from-primary/30 to-primary/10 text-sm font-semibold text-primary">
+                {(log.profile.display_name || "U")[0].toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {/* Online indicator effect */}
+            <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card bg-emerald-500" />
+          </div>
           <div>
-            <p className="font-medium text-foreground">
+            <p className="font-semibold text-foreground tracking-tight">
               {log.profile.display_name || "Anonymous"}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -78,12 +90,20 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
-              <MoreHorizontal className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-muted/80 interactive">
+              <MoreHorizontal className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="glass">
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
+          <DropdownMenuContent align="end" className="glass rounded-xl border-border/50">
+            <DropdownMenuItem className="rounded-lg">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuItem className="rounded-lg">
+              <Bookmark className="mr-2 h-4 w-4" />
+              Save
+            </DropdownMenuItem>
+            <DropdownMenuItem className="rounded-lg text-destructive focus:text-destructive">
               <Flag className="mr-2 h-4 w-4" />
               Report
             </DropdownMenuItem>
@@ -93,62 +113,110 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
 
       {/* Photo */}
       {log.photo_url && (
-        <div className="relative aspect-square w-full overflow-hidden bg-muted">
+        <div 
+          className="relative aspect-[4/5] w-full overflow-hidden bg-muted cursor-pointer"
+          onDoubleClick={handleDoubleTap}
+        >
+          {/* Loading skeleton */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 skeleton-shimmer" />
+          )}
           <img
             src={log.photo_url}
             alt={`${log.cigar.brand} ${log.cigar.line}`}
-            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+            className={cn(
+              "h-full w-full object-cover transition-all duration-700",
+              imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105"
+            )}
             loading="lazy"
+            onLoad={() => setImageLoaded(true)}
           />
-          {/* Gradient overlay at bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card/80 to-transparent pointer-events-none" />
+          {/* Gradient overlays for depth */}
+          <div className="photo-overlay" />
+          <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-card/30 to-transparent pointer-events-none" />
+          
+          {/* Rating badge on photo */}
+          <div className="absolute bottom-4 left-4 glass rounded-xl px-3 py-2">
+            <LitMatchDisplay score={Number(log.overall_score)} size="sm" />
+          </div>
         </div>
       )}
 
       {/* Content */}
-      <div className="p-4 pt-3 space-y-3">
-        {/* Cigar info */}
+      <div className="p-4 space-y-3">
+        {/* Cigar info with premium styling */}
         <div>
-          <h3 className="font-display text-lg font-semibold text-foreground leading-tight">
-            {log.cigar.brand} {log.cigar.line}
+          <h3 className="font-display text-xl font-bold text-foreground leading-tight tracking-tight">
+            {log.cigar.brand}
           </h3>
-          <p className="text-sm text-muted-foreground">{log.cigar.vitola}</p>
+          <p className="text-base text-primary/90 font-medium">{log.cigar.line}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{log.cigar.vitola}</p>
         </div>
 
-        {/* Rating with ember glow */}
-        <div className="inline-flex">
-          <LitMatchDisplay score={Number(log.overall_score)} size="md" />
-        </div>
-
-        {/* Notes */}
-        {log.notes && (
-          <p className="text-sm text-foreground/80 line-clamp-3 leading-relaxed">{log.notes}</p>
+        {/* Rating if no photo */}
+        {!log.photo_url && (
+          <div className="py-2">
+            <LitMatchDisplay score={Number(log.overall_score)} size="md" />
+          </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-6 pt-2 border-t border-border/50">
-          <button
-            onClick={handleLike}
-            disabled={!user || isLiking}
-            className={cn(
-              "like-button flex items-center gap-2 py-2 text-sm font-medium",
-              log.user_has_liked
-                ? "text-primary liked"
-                : "text-muted-foreground hover:text-primary"
-            )}
-          >
-            <Heart
+        {/* Notes with expand functionality */}
+        {log.notes && (
+          <div>
+            <p 
               className={cn(
-                "h-5 w-5 transition-all",
-                log.user_has_liked && "fill-primary"
+                "text-sm text-foreground/85 leading-relaxed cursor-pointer",
+                !showFullNotes && "line-clamp-2"
               )}
-            />
-            <span>{log.likes_count}</span>
-          </button>
+              onClick={() => setShowFullNotes(!showFullNotes)}
+            >
+              {log.notes}
+            </p>
+            {log.notes.length > 100 && !showFullNotes && (
+              <button 
+                onClick={() => setShowFullNotes(true)}
+                className="text-xs text-muted-foreground hover:text-primary mt-1 transition-colors"
+              >
+                Read more
+              </button>
+            )}
+          </div>
+        )}
 
-          <button className="flex items-center gap-2 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            <MessageCircle className="h-5 w-5" />
-            <span>{log.comments_count}</span>
+        {/* Actions - more engaging */}
+        <div className="flex items-center justify-between pt-3 border-t border-border/30">
+          <div className="flex items-center gap-5">
+            <button
+              onClick={handleLike}
+              disabled={!user || isLiking}
+              className={cn(
+                "like-button flex items-center gap-2 text-sm font-medium",
+                log.user_has_liked
+                  ? "text-primary liked"
+                  : "text-muted-foreground hover:text-primary"
+              )}
+            >
+              <Heart
+                className={cn(
+                  "h-6 w-6 transition-all",
+                  log.user_has_liked && "fill-primary scale-110"
+                )}
+              />
+              <span className="tabular-nums">{log.likes_count}</span>
+            </button>
+
+            <button className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors interactive">
+              <MessageCircle className="h-6 w-6" />
+              <span className="tabular-nums">{log.comments_count}</span>
+            </button>
+
+            <button className="text-muted-foreground hover:text-foreground transition-colors interactive">
+              <Share2 className="h-5 w-5" />
+            </button>
+          </div>
+
+          <button className="text-muted-foreground hover:text-primary transition-colors interactive">
+            <Bookmark className="h-5 w-5" />
           </button>
         </div>
       </div>
