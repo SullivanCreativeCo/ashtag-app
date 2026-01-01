@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Loader2, ArrowLeft, Camera } from "lucide-react";
+import { Search, Plus, Loader2, ArrowLeft, Camera, ImagePlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Cigar {
@@ -50,6 +50,10 @@ export default function Rate() {
   const [strength, setStrength] = useState(3);
   const [burn, setBurn] = useState(3);
   const [notes, setNotes] = useState("");
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) {
@@ -108,10 +112,57 @@ export default function Rate() {
     setStep("log");
   };
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhotoPreview(null);
+    setPhotoFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user || !selectedCigar) return;
 
     setSaving(true);
+    let photoUrl: string | null = null;
+
+    // Upload photo if selected
+    if (photoFile) {
+      setUploadingPhoto(true);
+      const fileExt = photoFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("cigar-bands")
+        .upload(fileName, photoFile);
+
+      if (uploadError) {
+        toast({
+          title: "Photo upload failed",
+          description: "Your rating will be saved without the photo",
+          variant: "destructive",
+        });
+      } else {
+        const { data: { publicUrl } } = supabase.storage
+          .from("cigar-bands")
+          .getPublicUrl(fileName);
+        photoUrl = publicUrl;
+      }
+      setUploadingPhoto(false);
+    }
+
     const { error } = await supabase.from("smoke_logs").insert({
       user_id: user.id,
       cigar_id: selectedCigar.id,
@@ -120,6 +171,7 @@ export default function Rate() {
       strength,
       burn,
       notes,
+      photo_url: photoUrl,
     });
 
     if (error) {
@@ -318,6 +370,44 @@ export default function Rate() {
               </p>
             </div>
 
+            {/* Photo upload */}
+            <div className="space-y-2">
+              <Label>Add a Photo (optional)</Label>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePhotoSelect}
+                ref={fileInputRef}
+                className="hidden"
+              />
+              {photoPreview ? (
+                <div className="relative rounded-lg overflow-hidden border border-border">
+                  <img 
+                    src={photoPreview} 
+                    alt="Photo preview" 
+                    className="w-full h-48 object-cover"
+                  />
+                  <button
+                    onClick={removePhoto}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full gap-2 h-24 border-dashed"
+                >
+                  <ImagePlus className="h-5 w-5" />
+                  Add a Photo
+                </Button>
+              )}
+            </div>
+
             {/* Notes */}
             <div className="space-y-2">
               <Label htmlFor="notes">Tasting Notes (optional)</Label>
@@ -333,13 +423,13 @@ export default function Rate() {
             {/* Submit */}
             <Button
               onClick={handleSubmit}
-              disabled={saving}
+              disabled={saving || uploadingPhoto}
               className="w-full bg-gradient-ember py-6 font-semibold shadow-ember"
             >
-              {saving ? (
+              {(saving || uploadingPhoto) ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
-              Rate This Cigar
+              {uploadingPhoto ? "Uploading Photo..." : "Rate This Cigar"}
             </Button>
           </div>
         )}
