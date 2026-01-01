@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { SmokeLogCard } from "@/components/SmokeLogCard";
-import { Loader2 } from "lucide-react";
+import { CameraCapture } from "@/components/CameraCapture";
+import { Loader2, Plus } from "lucide-react";
 
 interface SmokeLogWithDetails {
   id: string;
@@ -34,13 +36,20 @@ interface SmokeLogWithDetails {
 }
 
 export default function Feed() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [logs, setLogs] = useState<SmokeLogWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   useEffect(() => {
     fetchLogs();
   }, [user]);
+
+  const handleCameraCapture = (imageData: string) => {
+    // Navigate to rate page with the captured image
+    navigate("/rate", { state: { capturedImage: imageData } });
+  };
 
   const fetchLogs = async () => {
     try {
@@ -135,7 +144,7 @@ export default function Feed() {
 
   return (
     <AppLayout>
-      <div className="space-y-5 py-4 px-1">
+      <div className="space-y-5 py-4 px-1 pb-20">
         <div className="px-1">
           <h1 className="font-display text-2xl font-bold text-foreground tracking-tight">
             Stick Pics
@@ -186,6 +195,22 @@ export default function Feed() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setCameraOpen(true)}
+        className="fab"
+        aria-label="Add smoke log"
+      >
+        <Plus className="h-6 w-6 text-white" />
+      </button>
+
+      {/* Camera Capture Modal */}
+      <CameraCapture
+        isOpen={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onCapture={handleCameraCapture}
+      />
     </AppLayout>
   );
 }
