@@ -56,13 +56,13 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card animate-fade-in">
+    <div className="card-elevated card-press stagger-item">
       {/* Header */}
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between p-4 pb-3">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 border border-border">
+          <Avatar className="h-10 w-10 ring-2 ring-border/50">
             <AvatarImage src={log.profile.avatar_url || undefined} />
-            <AvatarFallback className="bg-secondary text-sm">
+            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-sm font-medium text-primary">
               {(log.profile.display_name || "U")[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -78,12 +78,12 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem className="text-destructive">
+          <DropdownMenuContent align="end" className="glass">
+            <DropdownMenuItem className="text-destructive focus:text-destructive">
               <Flag className="mr-2 h-4 w-4" />
               Report
             </DropdownMenuItem>
@@ -93,40 +93,47 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
 
       {/* Photo */}
       {log.photo_url && (
-        <div className="aspect-square w-full overflow-hidden bg-muted">
+        <div className="relative aspect-square w-full overflow-hidden bg-muted">
           <img
             src={log.photo_url}
             alt={`${log.cigar.brand} ${log.cigar.line}`}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+            loading="lazy"
           />
+          {/* Gradient overlay at bottom */}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card/80 to-transparent pointer-events-none" />
         </div>
       )}
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 pt-3 space-y-3">
         {/* Cigar info */}
         <div>
-          <h3 className="font-display text-lg font-semibold text-foreground">
+          <h3 className="font-display text-lg font-semibold text-foreground leading-tight">
             {log.cigar.brand} {log.cigar.line}
           </h3>
           <p className="text-sm text-muted-foreground">{log.cigar.vitola}</p>
         </div>
 
-        {/* Rating */}
-        <LitMatchDisplay score={Number(log.overall_score)} size="md" />
+        {/* Rating with ember glow */}
+        <div className="inline-flex">
+          <LitMatchDisplay score={Number(log.overall_score)} size="md" />
+        </div>
 
         {/* Notes */}
-        <p className="text-sm text-foreground/90 line-clamp-3">{log.notes}</p>
+        {log.notes && (
+          <p className="text-sm text-foreground/80 line-clamp-3 leading-relaxed">{log.notes}</p>
+        )}
 
         {/* Actions */}
-        <div className="flex items-center gap-4 pt-2">
+        <div className="flex items-center gap-6 pt-2 border-t border-border/50">
           <button
             onClick={handleLike}
             disabled={!user || isLiking}
             className={cn(
-              "flex items-center gap-1.5 text-sm transition-colors",
+              "like-button flex items-center gap-2 py-2 text-sm font-medium",
               log.user_has_liked
-                ? "text-primary"
+                ? "text-primary liked"
                 : "text-muted-foreground hover:text-primary"
             )}
           >
@@ -139,7 +146,7 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
             <span>{log.likes_count}</span>
           </button>
 
-          <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <button className="flex items-center gap-2 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             <MessageCircle className="h-5 w-5" />
             <span>{log.comments_count}</span>
           </button>
