@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Camera, Star, Archive, MapPin } from "lucide-react";
+import { Camera, Flame, DoorOpen, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -10,12 +10,12 @@ const navItems = [
   },
   {
     label: "Rate",
-    icon: Star,
+    icon: Flame,
     path: "/rate",
   },
   {
     label: "My Humidor",
-    icon: Archive,
+    icon: DoorOpen,
     path: "/humidor",
   },
   {
