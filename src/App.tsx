@@ -11,6 +11,7 @@ import Humidor from "./pages/Humidor";
 import NearMe from "./pages/NearMe";
 import MatchCigar from "./pages/MatchCigar";
 import AdminBandImages from "./pages/AdminBandImages";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/humidor" element={<Humidor />} />
             <Route path="/near-me" element={<NearMe />} />
             <Route path="/admin/band-images" element={<AdminBandImages />} />
+            <Route path="/install" element={<Install />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
