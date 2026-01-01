@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Playfair Display", "serif"],
-        body: ["Inter", "sans-serif"],
+        display: ["Abril Fatface", "serif"],
+        body: ["Old Standard TT", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
