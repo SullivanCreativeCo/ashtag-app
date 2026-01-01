@@ -10,6 +10,7 @@ import Rate from "./pages/Rate";
 import Humidor from "./pages/Humidor";
 import NearMe from "./pages/NearMe";
 import MatchCigar from "./pages/MatchCigar";
+import AdminBandImages from "./pages/AdminBandImages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/match-cigar" element={<MatchCigar />} />
             <Route path="/humidor" element={<Humidor />} />
             <Route path="/near-me" element={<NearMe />} />
+            <Route path="/admin/band-images" element={<AdminBandImages />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
