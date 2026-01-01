@@ -85,20 +85,22 @@ export function StickPickOfWeek() {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
           
+          {/* Floating smoke wisps */}
+          <div className="absolute bottom-8 right-16 w-8 h-8 rounded-full bg-gradient-to-t from-muted/30 to-transparent blur-sm animate-smoke-drift" style={{ animationDelay: '0s' }} />
+          <div className="absolute bottom-6 right-24 w-6 h-6 rounded-full bg-gradient-to-t from-muted/25 to-transparent blur-sm animate-smoke-drift-alt" style={{ animationDelay: '1s' }} />
+          <div className="absolute bottom-10 right-20 w-10 h-10 rounded-full bg-gradient-to-t from-muted/20 to-transparent blur-md animate-smoke-drift" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-4 right-12 w-5 h-5 rounded-full bg-gradient-to-t from-muted/35 to-transparent blur-sm animate-smoke-drift-alt" style={{ animationDelay: '0.5s' }} />
+          <div className="absolute bottom-12 right-28 w-7 h-7 rounded-full bg-gradient-to-t from-muted/15 to-transparent blur-md animate-smoke-drift" style={{ animationDelay: '3s' }} />
+          
           {/* Badge overlay */}
           <div className="absolute top-3 left-3 flex items-center gap-2 glass rounded-full px-3 py-1.5">
             <div className="relative">
-              <Sparkles className="h-4 w-4 text-primary animate-pulse-ember" />
+              <Sparkles className="h-4 w-4 text-primary animate-pulse" />
             </div>
             <span className="text-xs font-bold text-primary tracking-wide uppercase">
               Pick of the Week
             </span>
           </div>
-
-          {/* Decorative ember particles */}
-          <div className="absolute top-6 right-8 h-1.5 w-1.5 rounded-full bg-primary/60 animate-float" style={{ animationDelay: '0s' }} />
-          <div className="absolute top-10 right-4 h-1 w-1 rounded-full bg-primary/40 animate-float" style={{ animationDelay: '0.5s' }} />
-          <div className="absolute bottom-16 right-12 h-1 w-1 rounded-full bg-primary/50 animate-float" style={{ animationDelay: '1s' }} />
         </div>
 
         {/* Content */}
