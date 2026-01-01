@@ -320,27 +320,26 @@ export default function Rate() {
 
             {/* Notes */}
             <div className="space-y-2">
-              <Label htmlFor="notes">Tasting Notes</Label>
+              <Label htmlFor="notes">Tasting Notes (optional)</Label>
               <Textarea
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Describe your experience..."
                 className="min-h-[120px] bg-card"
-                required
               />
             </div>
 
             {/* Submit */}
             <Button
               onClick={handleSubmit}
-              disabled={saving || !notes.trim()}
+              disabled={saving}
               className="w-full bg-gradient-ember py-6 font-semibold shadow-ember"
             >
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
-              Log This Smoke
+              Rate This Cigar
             </Button>
           </div>
         )}
