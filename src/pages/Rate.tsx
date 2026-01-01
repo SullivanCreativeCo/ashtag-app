@@ -370,43 +370,32 @@ export default function Rate() {
               </p>
             </div>
 
-            {/* Photo upload */}
-            <div className="space-y-2">
-              <Label>Add a Photo (optional)</Label>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handlePhotoSelect}
-                ref={fileInputRef}
-                className="hidden"
-              />
-              {photoPreview ? (
-                <div className="relative rounded-lg overflow-hidden border border-border">
-                  <img 
-                    src={photoPreview} 
-                    alt="Photo preview" 
-                    className="w-full h-48 object-cover"
-                  />
-                  <button
-                    onClick={removePhoto}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full gap-2 h-24 border-dashed"
+            {/* Hidden file input */}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoSelect}
+              ref={fileInputRef}
+              className="hidden"
+            />
+
+            {/* Photo preview (if photo selected) */}
+            {photoPreview && (
+              <div className="relative rounded-lg overflow-hidden border border-border">
+                <img 
+                  src={photoPreview} 
+                  alt="Photo preview" 
+                  className="w-full h-48 object-cover"
+                />
+                <button
+                  onClick={removePhoto}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-background/80 backdrop-blur-sm border border-border hover:bg-destructive hover:text-destructive-foreground transition-colors"
                 >
-                  <ImagePlus className="h-5 w-5" />
-                  Add a Photo
-                </Button>
-              )}
-            </div>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
 
             {/* Notes */}
             <div className="space-y-2">
@@ -434,6 +423,16 @@ export default function Rate() {
           </div>
         )}
       </div>
+
+      {/* Floating camera button - mobile pattern */}
+      {step === "log" && !photoPreview && (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="fixed bottom-24 right-4 z-50 h-14 w-14 rounded-full bg-gradient-ember shadow-ember flex items-center justify-center hover:scale-105 transition-transform active:scale-95"
+        >
+          <Camera className="h-6 w-6 text-white" />
+        </button>
+      )}
     </AppLayout>
   );
 }
