@@ -53,7 +53,7 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
   const [showFullNotes, setShowFullNotes] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [localCommentsCount, setLocalCommentsCount] = useState(log.comments_count);
-
+  const [showSmokeEffect, setShowSmokeEffect] = useState(false);
   const handleAuthRequired = () => {
     toast.error("Please sign in to interact", {
       action: {
@@ -70,6 +70,13 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
     }
     if (isLiking) return;
     setIsLiking(true);
+    
+    // Trigger smoke effect when liking (not unliking)
+    if (!log.user_has_liked) {
+      setShowSmokeEffect(true);
+      setTimeout(() => setShowSmokeEffect(false), 800);
+    }
+    
     await onLikeToggle(log.id, log.user_has_liked);
     setIsLiking(false);
   };
@@ -210,18 +217,28 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
               onClick={handleLike}
               disabled={isLiking}
               className={cn(
-                "like-button flex items-center gap-2 text-sm font-medium",
+                "like-button flex items-center gap-2 text-sm font-medium relative",
                 log.user_has_liked
                   ? "text-primary liked"
                   : "text-muted-foreground hover:text-primary"
               )}
             >
-              <Heart
-                className={cn(
-                  "h-6 w-6 transition-all",
-                  log.user_has_liked && "fill-primary scale-110"
+              <div className="relative">
+                <Heart
+                  className={cn(
+                    "h-6 w-6 transition-all",
+                    log.user_has_liked && "fill-primary scale-110"
+                  )}
+                />
+                {/* Smoke particles on like */}
+                {showSmokeEffect && (
+                  <>
+                    <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-smoke/60 animate-like-smoke" />
+                    <span className="absolute -top-1 left-1/4 w-2 h-2 rounded-full bg-smoke/40 animate-like-smoke [animation-delay:100ms]" />
+                    <span className="absolute -top-1 left-3/4 w-2 h-2 rounded-full bg-smoke/40 animate-like-smoke [animation-delay:200ms]" />
+                  </>
                 )}
-              />
+              </div>
               <span className="tabular-nums">{log.likes_count}</span>
             </button>
 

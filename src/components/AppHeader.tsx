@@ -49,8 +49,23 @@ export function AppHeader() {
           className="flex items-center gap-2"
         >
           <span className="font-display text-2xl font-bold tracking-tight text-foreground">
-            Ash<span className="text-primary">Tag</span>
+            Ash<span className="text-primary relative">Ta<span className="inline-block">g</span></span>
           </span>
+          {/* Smoke wisp from the g */}
+          <svg 
+            className="absolute -right-2 -top-3 w-6 h-8 text-smoke/50 animate-smoke-drift pointer-events-none"
+            viewBox="0 0 24 32"
+            fill="none"
+          >
+            <path 
+              d="M12 28 C12 28, 8 22, 10 18 C12 14, 16 16, 14 12 C12 8, 8 10, 10 6 C12 2, 14 4, 12 0"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              fill="none"
+              opacity="0.6"
+            />
+          </svg>
         </button>
 
         {user ? (
