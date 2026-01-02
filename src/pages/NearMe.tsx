@@ -19,57 +19,8 @@ interface Lounge {
   rating?: number;
   lat: number;
   lng: number;
+  isOpen?: boolean;
 }
-
-// Mock data for lounges - in production this would come from Google Maps API
-const mockLounges: Lounge[] = [
-  {
-    id: "1",
-    name: "The Velvet Cigar Lounge",
-    address: "123 Main St, Downtown",
-    distance: "0.3 mi",
-    phone: "(555) 123-4567",
-    website: "https://velvetcigar.com",
-    hours: "Open until 11 PM",
-    rating: 4.8,
-    lat: 40.7128,
-    lng: -74.006,
-  },
-  {
-    id: "2",
-    name: "Smoke & Oak",
-    address: "456 Oak Avenue",
-    distance: "1.2 mi",
-    phone: "(555) 234-5678",
-    hours: "Open until 10 PM",
-    rating: 4.5,
-    lat: 40.7178,
-    lng: -74.012,
-  },
-  {
-    id: "3",
-    name: "Churchill's Reserve",
-    address: "789 Heritage Blvd",
-    distance: "2.4 mi",
-    phone: "(555) 345-6789",
-    website: "https://churchillsreserve.com",
-    hours: "Open until 12 AM",
-    rating: 4.9,
-    lat: 40.7218,
-    lng: -73.998,
-  },
-  {
-    id: "4",
-    name: "The Leaf & Ember",
-    address: "321 Tobacco Lane",
-    distance: "3.1 mi",
-    phone: "(555) 456-7890",
-    hours: "Open until 9 PM",
-    rating: 4.3,
-    lat: 40.7088,
-    lng: -74.015,
-  },
-];
 
 type ViewType = "list" | "map";
 
@@ -77,7 +28,7 @@ export default function NearMe() {
   const [view, setView] = useState<ViewType>("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [lounges, setLounges] = useState<Lounge[]>(mockLounges);
+  const [lounges, setLounges] = useState<Lounge[]>([]);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [mapboxToken, setMapboxToken] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -102,30 +53,52 @@ export default function NearMe() {
     fetchMapboxToken();
   }, []);
 
-  // Get user location
+  // Get user location and fetch nearby lounges
   useEffect(() => {
     if (navigator.geolocation) {
       setLoading(true);
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
+        async (position) => {
+          const location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          });
-          setLoading(false);
+          };
+          setUserLocation(location);
+          await fetchNearbyLounges(location.lat, location.lng);
         },
         (error) => {
           console.error("Geolocation error:", error);
           setLocationError("Enable location to find lounges near you");
           setLoading(false);
-          // Use default NYC location for demo
-          setUserLocation({ lat: 40.7128, lng: -74.006 });
         }
       );
     } else {
-      setUserLocation({ lat: 40.7128, lng: -74.006 });
+      setLocationError("Geolocation is not supported by your browser");
+      setLoading(false);
     }
   }, []);
+
+  // Fetch nearby lounges from Google Places API
+  const fetchNearbyLounges = async (lat: number, lng: number) => {
+    try {
+      console.log("Fetching nearby lounges for:", lat, lng);
+      const { data, error } = await supabase.functions.invoke("search-nearby-lounges", {
+        body: { lat, lng, radius: 16093 }, // 10 miles in meters
+      });
+      
+      if (error) {
+        console.error("Error fetching lounges:", error);
+        throw error;
+      }
+      
+      console.log("Received lounges:", data?.lounges?.length || 0);
+      setLounges(data?.lounges || []);
+    } catch (error) {
+      console.error("Failed to fetch nearby lounges:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Initialize map when viewing map tab
   useEffect(() => {
@@ -300,10 +273,12 @@ export default function NearMe() {
                     <MapPin className="h-4 w-4" />
                     <span>{lounge.address}</span>
                   </div>
-                  {lounge.hours && (
+                  {lounge.isOpen !== undefined && (
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      <span>{lounge.hours}</span>
+                      <span className={lounge.isOpen ? "text-green-500" : "text-muted-foreground"}>
+                        {lounge.isOpen ? "Open now" : "Closed"}
+                      </span>
                     </div>
                   )}
                 </div>
