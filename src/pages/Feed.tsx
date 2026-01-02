@@ -148,12 +148,10 @@ export default function Feed() {
       <div className="space-y-5 pb-24">
         {/* Sticky header */}
         <div className="sticky top-0 z-40 -mx-1 px-4 py-4 header-blur">
+          <p className="text-sm text-muted-foreground">Welcome back</p>
           <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
-            Stick Pics
+            Hello, {user?.user_metadata?.full_name?.split(' ')[0] || user?.user_metadata?.name?.split(' ')[0] || 'Friend'} 👋
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Latest smoke logs from the community
-          </p>
         </div>
 
         {/* Stick Pick of the Week */}
