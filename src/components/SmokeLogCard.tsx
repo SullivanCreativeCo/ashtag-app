@@ -84,7 +84,10 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
     <div className="card-elevated stagger-item group">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-3">
-        <div className="flex items-center gap-3">
+        <div 
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => navigate(`/profile/${log.user_id}`)}
+        >
           <div className="relative">
             <Avatar className="h-11 w-11 ring-2 ring-primary/20 transition-all duration-300 group-hover:ring-primary/40">
               <AvatarImage src={log.profile.avatar_url || undefined} />
@@ -96,7 +99,7 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
             <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card bg-emerald-500" />
           </div>
           <div>
-            <p className="font-semibold text-foreground tracking-tight">
+            <p className="font-semibold text-foreground tracking-tight hover:text-primary transition-colors">
               {log.profile.display_name || "Anonymous"}
             </p>
             <p className="text-xs text-muted-foreground">

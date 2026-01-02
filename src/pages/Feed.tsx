@@ -2,10 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useFriendships } from "@/hooks/useFriendships";
 import { AppLayout } from "@/components/AppLayout";
 import { SmokeLogCard } from "@/components/SmokeLogCard";
 import { StickPickOfWeek } from "@/components/StickPickOfWeek";
 import { CameraCapture } from "@/components/CameraCapture";
+import { FriendRequestBadge } from "@/components/FriendRequestBadge";
+import { FriendRequestsSheet } from "@/components/FriendRequestsSheet";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Plus } from "lucide-react";
 
 interface SmokeLogWithDetails {
@@ -39,9 +43,11 @@ interface SmokeLogWithDetails {
 export default function Feed() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { pendingRequests, getFriendIds } = useFriendships();
   const [logs, setLogs] = useState<SmokeLogWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [feedFilter, setFeedFilter] = useState<"all" | "friends">("all");
 
   useEffect(() => {
     fetchLogs();
@@ -148,10 +154,31 @@ export default function Feed() {
       <div className="space-y-5 pb-24">
         {/* Sticky header */}
         <div className="sticky top-0 z-40 -mx-1 px-4 py-4 header-blur">
-          <p className="text-sm text-muted-foreground">Welcome back</p>
-          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
-            Hello, {user?.user_metadata?.full_name?.split(' ')[0] || user?.user_metadata?.name?.split(' ')[0] || 'Friend'} 👋
-          </h1>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Welcome back</p>
+              <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
+                Hello, {user?.user_metadata?.full_name?.split(' ')[0] || user?.user_metadata?.name?.split(' ')[0] || 'Friend'} 👋
+              </h1>
+            </div>
+            {pendingRequests.length > 0 && (
+              <FriendRequestsSheet>
+                <FriendRequestBadge count={pendingRequests.length} />
+              </FriendRequestsSheet>
+            )}
+          </div>
+
+          {/* Feed filter tabs */}
+          {user && (
+            <div className="mt-4">
+              <Tabs value={feedFilter} onValueChange={(v) => setFeedFilter(v as "all" | "friends")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="all">Everyone</TabsTrigger>
+                  <TabsTrigger value="friends">Friends</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
         </div>
 
         {/* Stick Pick of the Week */}
@@ -166,39 +193,54 @@ export default function Feed() {
               </div>
               <p className="text-sm text-muted-foreground animate-pulse">Loading the latest smokes...</p>
             </div>
-          ) : logs.length === 0 ? (
-            <div className="card-elevated flex flex-col items-center justify-center py-20 text-center">
-              <div className="mb-5 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 p-6">
-                <svg
-                  className="h-12 w-12 text-primary animate-glow"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+          ) : (() => {
+            const friendIds = getFriendIds();
+            const filteredLogs = feedFilter === "friends" 
+              ? logs.filter(log => friendIds.includes(log.user_id))
+              : logs;
+
+            if (filteredLogs.length === 0) {
+              return (
+                <div className="card-elevated flex flex-col items-center justify-center py-20 text-center">
+                  <div className="mb-5 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 p-6">
+                    <svg
+                      className="h-12 w-12 text-primary animate-glow"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-display font-bold text-foreground">
+                    {feedFilter === "friends" ? "No friend posts yet" : "No smoke logs yet"}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground max-w-[240px]">
+                    {feedFilter === "friends" 
+                      ? "Add some friends to see their smoke logs here!"
+                      : "Be the first to share your cigar experience with the community!"}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-5">
+                {filteredLogs.map((log) => (
+                  <SmokeLogCard
+                    key={log.id}
+                    log={log}
+                    onLikeToggle={handleLikeToggle}
                   />
-                </svg>
+                ))}
               </div>
-              <h3 className="text-xl font-display font-bold text-foreground">No smoke logs yet</h3>
-              <p className="mt-2 text-sm text-muted-foreground max-w-[240px]">
-                Be the first to share your cigar experience with the community!
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {logs.map((log) => (
-                <SmokeLogCard
-                  key={log.id}
-                  log={log}
-                  onLikeToggle={handleLikeToggle}
-                />
-              ))}
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
 
