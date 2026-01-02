@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Loader2, ArrowLeft, Camera, ImagePlus, X } from "lucide-react";
+import { Search, Plus, Loader2, ArrowLeft, Camera, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CameraCapture } from "@/components/CameraCapture";
 
 interface Cigar {
   id: string;
@@ -19,6 +20,12 @@ interface Cigar {
   vitola: string;
   wrapper: string | null;
   strength_profile: string | null;
+}
+
+interface BandImage {
+  id: string;
+  image_url: string;
+  is_primary: boolean | null;
 }
 
 interface LocationState {
@@ -54,6 +61,8 @@ export default function Rate() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [bandImages, setBandImages] = useState<BandImage[]>([]);
+  const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -107,9 +116,31 @@ export default function Rate() {
     return () => clearTimeout(debounce);
   }, [searchQuery]);
 
-  const handleSelectCigar = (cigar: Cigar) => {
+  const handleSelectCigar = async (cigar: Cigar) => {
     setSelectedCigar(cigar);
     setStep("log");
+    
+    // Fetch band images for this cigar
+    const { data: images } = await supabase
+      .from("cigar_band_images")
+      .select("id, image_url, is_primary")
+      .eq("cigar_id", cigar.id);
+    
+    if (images && images.length > 0) {
+      setBandImages(images);
+    } else {
+      setBandImages([]);
+    }
+  };
+
+  const handleCameraCapture = async (imageData: string) => {
+    // Convert base64 to file
+    const response = await fetch(imageData);
+    const blob = await response.blob();
+    const file = new File([blob], `band-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    setPhotoFile(file);
+    setPhotoPreview(imageData);
+    setShowCamera(false);
   };
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,6 +357,7 @@ export default function Rate() {
               onClick={() => {
                 setStep("search");
                 setSelectedCigar(null);
+                setBandImages([]);
               }}
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -333,14 +365,28 @@ export default function Rate() {
               Back to search
             </button>
 
-            {/* Selected cigar */}
+            {/* Selected cigar with band image */}
             <div className="rounded-lg border border-primary bg-card p-4">
-              <h2 className="font-display text-xl font-semibold text-foreground">
-                {selectedCigar?.brand} {selectedCigar?.line}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {selectedCigar?.vitola}
-              </p>
+              <div className="flex gap-4">
+                {/* Band image from database */}
+                {bandImages.length > 0 && (
+                  <div className="flex-shrink-0">
+                    <img 
+                      src={bandImages.find(img => img.is_primary)?.image_url || bandImages[0].image_url}
+                      alt="Cigar band"
+                      className="w-20 h-20 object-cover rounded-lg border border-border"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-display text-xl font-semibold text-foreground">
+                    {selectedCigar?.brand} {selectedCigar?.line}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCigar?.vitola}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Rating categories */}
@@ -427,12 +473,19 @@ export default function Rate() {
       {/* Floating camera button - mobile pattern */}
       {step === "log" && !photoPreview && (
         <button
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => setShowCamera(true)}
           className="fixed bottom-24 right-4 z-50 h-14 w-14 rounded-full bg-gradient-ember shadow-ember flex items-center justify-center hover:scale-105 transition-transform active:scale-95"
         >
           <Camera className="h-6 w-6 text-white" />
         </button>
       )}
+
+      {/* Camera capture modal */}
+      <CameraCapture
+        isOpen={showCamera}
+        onClose={() => setShowCamera(false)}
+        onCapture={handleCameraCapture}
+      />
     </AppLayout>
   );
 }
