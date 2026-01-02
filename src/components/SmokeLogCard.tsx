@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, MessageCircle, MoreHorizontal, Flag, Share2, Bookmark } from "lucide-react";
 import { LitMatchDisplay } from "./LitMatchRating";
+import { CommentSection } from "./CommentSection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-
+import { toast } from "sonner";
 interface SmokeLogCardProps {
   log: {
     id: string;
@@ -46,12 +48,27 @@ interface SmokeLogCardProps {
 
 export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isLiking, setIsLiking] = useState(false);
   const [showFullNotes, setShowFullNotes] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [localCommentsCount, setLocalCommentsCount] = useState(log.comments_count);
+
+  const handleAuthRequired = () => {
+    toast.error("Please sign in to interact", {
+      action: {
+        label: "Sign In",
+        onClick: () => navigate("/auth"),
+      },
+    });
+  };
 
   const handleLike = async () => {
-    if (!user || isLiking) return;
+    if (!user) {
+      handleAuthRequired();
+      return;
+    }
+    if (isLiking) return;
     setIsLiking(true);
     await onLikeToggle(log.id, log.user_has_liked);
     setIsLiking(false);
@@ -188,7 +205,7 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
           <div className="flex items-center gap-5">
             <button
               onClick={handleLike}
-              disabled={!user || isLiking}
+              disabled={isLiking}
               className={cn(
                 "like-button flex items-center gap-2 text-sm font-medium",
                 log.user_has_liked
@@ -205,10 +222,10 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
               <span className="tabular-nums">{log.likes_count}</span>
             </button>
 
-            <button className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors interactive">
+            <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <MessageCircle className="h-6 w-6" />
-              <span className="tabular-nums">{log.comments_count}</span>
-            </button>
+              <span className="tabular-nums">{localCommentsCount}</span>
+            </span>
 
             <button className="text-muted-foreground hover:text-foreground transition-colors interactive">
               <Share2 className="h-5 w-5" />
@@ -220,6 +237,13 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
           </button>
         </div>
       </div>
+
+      {/* Comment Section */}
+      <CommentSection
+        smokeLogId={log.id}
+        onCommentCountChange={setLocalCommentsCount}
+        onAuthRequired={handleAuthRequired}
+      />
     </div>
   );
 }
