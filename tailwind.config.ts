@@ -135,6 +135,19 @@ export default {
             transform: "translateY(-50px) translateX(-15px) scale(1.3)" 
           },
         },
+        "like-smoke": {
+          "0%": {
+            opacity: "0.6",
+            transform: "translateY(0) scale(0.5)",
+          },
+          "50%": {
+            opacity: "0.4",
+          },
+          "100%": {
+            opacity: "0",
+            transform: "translateY(-30px) scale(1.2)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -144,6 +157,7 @@ export default {
         shimmer: "shimmer 2s linear infinite",
         "smoke-drift": "smoke-drift 4s ease-out infinite",
         "smoke-drift-alt": "smoke-drift-alt 5s ease-out infinite",
+        "like-smoke": "like-smoke 0.8s ease-out forwards",
       },
     },
   },

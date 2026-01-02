@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   {
-    label: "Stick Pics",
+    label: "The Lounge",
     icon: Camera,
     path: "/feed",
   },
