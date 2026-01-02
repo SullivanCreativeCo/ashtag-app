@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Navigation, Phone, Globe, Clock, Search, List, Map as MapIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 interface Lounge {
   id: string;
@@ -14,6 +17,8 @@ interface Lounge {
   website?: string;
   hours?: string;
   rating?: number;
+  lat: number;
+  lng: number;
 }
 
 // Mock data for lounges - in production this would come from Google Maps API
@@ -27,6 +32,8 @@ const mockLounges: Lounge[] = [
     website: "https://velvetcigar.com",
     hours: "Open until 11 PM",
     rating: 4.8,
+    lat: 40.7128,
+    lng: -74.006,
   },
   {
     id: "2",
@@ -36,6 +43,8 @@ const mockLounges: Lounge[] = [
     phone: "(555) 234-5678",
     hours: "Open until 10 PM",
     rating: 4.5,
+    lat: 40.7178,
+    lng: -74.012,
   },
   {
     id: "3",
@@ -46,6 +55,8 @@ const mockLounges: Lounge[] = [
     website: "https://churchillsreserve.com",
     hours: "Open until 12 AM",
     rating: 4.9,
+    lat: 40.7218,
+    lng: -73.998,
   },
   {
     id: "4",
@@ -55,6 +66,8 @@ const mockLounges: Lounge[] = [
     phone: "(555) 456-7890",
     hours: "Open until 9 PM",
     rating: 4.3,
+    lat: 40.7088,
+    lng: -74.015,
   },
 ];
 
@@ -66,24 +79,125 @@ export default function NearMe() {
   const [loading, setLoading] = useState(false);
   const [lounges, setLounges] = useState<Lounge[]>(mockLounges);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
 
+  // Fetch Mapbox token
   useEffect(() => {
-    // Simulate getting user location
+    const fetchMapboxToken = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("get-mapbox-token");
+        if (error) throw error;
+        if (data?.token) {
+          setMapboxToken(data.token);
+        }
+      } catch (error) {
+        console.error("Failed to fetch Mapbox token:", error);
+      }
+    };
+    fetchMapboxToken();
+  }, []);
+
+  // Get user location
+  useEffect(() => {
     if (navigator.geolocation) {
       setLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // In production, we'd use this to fetch nearby lounges
-          console.log("Location:", position.coords);
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
           setLoading(false);
         },
         (error) => {
+          console.error("Geolocation error:", error);
           setLocationError("Enable location to find lounges near you");
           setLoading(false);
+          // Use default NYC location for demo
+          setUserLocation({ lat: 40.7128, lng: -74.006 });
         }
       );
+    } else {
+      setUserLocation({ lat: 40.7128, lng: -74.006 });
     }
   }, []);
+
+  // Initialize map when viewing map tab
+  useEffect(() => {
+    if (view !== "map" || !mapContainer.current || !mapboxToken || !userLocation) return;
+    if (map.current) return; // Already initialized
+
+    mapboxgl.accessToken = mapboxToken;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/dark-v11",
+      center: [userLocation.lng, userLocation.lat],
+      zoom: 13,
+    });
+
+    // Add navigation controls
+    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+    // Add user location marker
+    new mapboxgl.Marker({ color: "hsl(25, 100%, 50%)" })
+      .setLngLat([userLocation.lng, userLocation.lat])
+      .setPopup(new mapboxgl.Popup().setHTML("<strong>Your Location</strong>"))
+      .addTo(map.current);
+
+    // Add lounge markers
+    filteredLounges.forEach((lounge) => {
+      const marker = new mapboxgl.Marker({ color: "hsl(42, 100%, 55%)" })
+        .setLngLat([lounge.lng, lounge.lat])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(`
+            <div style="padding: 8px;">
+              <strong style="font-size: 14px;">${lounge.name}</strong>
+              <p style="margin: 4px 0; font-size: 12px; color: #666;">${lounge.address}</p>
+              ${lounge.rating ? `<p style="margin: 4px 0; font-size: 12px;">★ ${lounge.rating}</p>` : ""}
+            </div>
+          `)
+        )
+        .addTo(map.current!);
+      markersRef.current.push(marker);
+    });
+
+    return () => {
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
+    };
+  }, [view, mapboxToken, userLocation]);
+
+  // Update markers when lounges change
+  useEffect(() => {
+    if (!map.current) return;
+
+    // Remove old markers
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers
+    filteredLounges.forEach((lounge) => {
+      const marker = new mapboxgl.Marker({ color: "hsl(42, 100%, 55%)" })
+        .setLngLat([lounge.lng, lounge.lat])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setHTML(`
+            <div style="padding: 8px;">
+              <strong style="font-size: 14px;">${lounge.name}</strong>
+              <p style="margin: 4px 0; font-size: 12px; color: #666;">${lounge.address}</p>
+              ${lounge.rating ? `<p style="margin: 4px 0; font-size: 12px;">★ ${lounge.rating}</p>` : ""}
+            </div>
+          `)
+        )
+        .addTo(map.current!);
+      markersRef.current.push(marker);
+    });
+  }, [searchQuery]);
 
   const filteredLounges = lounges.filter(
     (lounge) =>
@@ -137,7 +251,7 @@ export default function NearMe() {
           </button>
         </div>
 
-        {locationError && (
+        {locationError && !userLocation && (
           <div className="rounded-lg border border-border bg-card p-4 text-center">
             <MapPin className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">{locationError}</p>
@@ -231,15 +345,16 @@ export default function NearMe() {
             ))}
           </div>
         ) : (
-          /* Map View Placeholder */
-          <div className="aspect-square w-full overflow-hidden rounded-xl border border-border bg-card">
-            <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-              <MapIcon className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="font-semibold text-foreground">Map View</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Connect Google Maps API to enable map view
-              </p>
-            </div>
+          /* Map View */
+          <div className="aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-card">
+            {mapboxToken ? (
+              <div ref={mapContainer} className="h-full w-full" />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                <p className="text-sm text-muted-foreground">Loading map...</p>
+              </div>
+            )}
           </div>
         )}
       </div>
