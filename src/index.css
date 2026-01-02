@@ -42,14 +42,16 @@
 
     /* Custom Ash Tag tokens */
     --ember: 25 100% 50%;
-    --ember-glow: 30 100% 60%;
+    --ember-glow: 45 100% 70%;
     --ember-deep: 20 100% 40%;
     --ash: 240 5% 30%;
     --smoke: 240 5% 50%;
     --charcoal: 240 6% 7%;
     --charcoal-light: 240 5% 12%;
-    --match-active: 38 100% 55%;
+    --match-active: 45 100% 60%;
     --match-inactive: 240 5% 25%;
+    --match-wood: 25 60% 35%;
+    --match-head-lit: 10 90% 30%;
 
     /* Premium gold accent */
     --gold: 42 100% 55%;

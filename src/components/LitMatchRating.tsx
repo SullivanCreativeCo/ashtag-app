@@ -70,14 +70,14 @@ function MatchIcon({ lit, className }: MatchIconProps) {
       xmlns="http://www.w3.org/2000/svg"
       className={cn("match-icon", className)}
     >
-      {/* Match stick body */}
+      {/* Match stick body - wooden brown */}
       <rect
         x="10"
         y="12"
         width="4"
         height="18"
         rx="1"
-        fill={lit ? "hsl(var(--ember-dark))" : "hsl(var(--match-inactive))"}
+        fill={lit ? "hsl(var(--match-wood))" : "hsl(var(--match-inactive))"}
       />
       
       {/* Match head */}
@@ -86,7 +86,7 @@ function MatchIcon({ lit, className }: MatchIconProps) {
         cy="11"
         rx="4"
         ry="5"
-        fill={lit ? "hsl(var(--ember))" : "hsl(var(--match-inactive))"}
+        fill={lit ? "hsl(var(--match-head-lit))" : "hsl(var(--match-inactive))"}
       />
       
       {/* Flame when lit */}
@@ -99,16 +99,16 @@ function MatchIcon({ lit, className }: MatchIconProps) {
             rx="5"
             ry="7"
             fill="hsl(var(--ember))"
-            opacity="0.3"
+            opacity="0.4"
             className="animate-pulse-ember"
           />
-          {/* Main flame */}
+          {/* Main flame - bright yellow */}
           <path
             d="M12 0C12 0 8 4 8 7C8 9.5 9.5 11 12 11C14.5 11 16 9.5 16 7C16 4 12 0 12 0Z"
             fill="hsl(var(--match-active))"
             className="animate-glow"
           />
-          {/* Inner flame */}
+          {/* Inner flame - bright white-yellow core */}
           <path
             d="M12 3C12 3 10 5.5 10 7C10 8.5 10.8 9.5 12 9.5C13.2 9.5 14 8.5 14 7C14 5.5 12 3 12 3Z"
             fill="hsl(var(--ember-glow))"
