@@ -36,7 +36,7 @@ interface LocationState {
 export default function Rate() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const locationState = location.state as LocationState | null;
@@ -65,10 +65,10 @@ export default function Rate() {
   const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       navigate("/auth");
     }
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   // Load preselected cigar if coming from match flow
   useEffect(() => {
