@@ -238,7 +238,7 @@ export default function Profile() {
           <div className="flex gap-6 mt-6 px-2">
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground">{stats.totalSmokes}</p>
-              <p className="text-xs text-muted-foreground">Smokes</p>
+              <p className="text-xs text-muted-foreground">Cigars</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-foreground flex items-center justify-center gap-1">
