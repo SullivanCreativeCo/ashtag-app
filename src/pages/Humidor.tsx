@@ -24,18 +24,19 @@ type FilterType = "all" | "favorites";
 
 export default function Humidor() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [cigars, setCigars] = useState<HumidorCigar[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>("all");
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/auth");
       return;
     }
     fetchHumidor();
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   const fetchHumidor = async () => {
     if (!user) return;

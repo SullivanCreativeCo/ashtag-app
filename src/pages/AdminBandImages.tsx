@@ -51,7 +51,7 @@ interface CigarBandImage {
 
 export default function AdminBandImages() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,12 +72,13 @@ export default function AdminBandImages() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/auth");
       return;
     }
     checkAdminRole();
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   useEffect(() => {
     if (isAdmin) {
