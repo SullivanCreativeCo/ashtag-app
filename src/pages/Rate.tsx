@@ -176,7 +176,7 @@ export default function Rate() {
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("cigar-bands")
+        .from("smoke-log-photos")
         .upload(fileName, photoFile);
 
       if (uploadError) {
@@ -187,7 +187,7 @@ export default function Rate() {
         });
       } else {
         const { data: { publicUrl } } = supabase.storage
-          .from("cigar-bands")
+          .from("smoke-log-photos")
           .getPublicUrl(fileName);
         photoUrl = publicUrl;
       }
