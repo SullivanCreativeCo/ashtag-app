@@ -13,12 +13,29 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication - JWT is verified by Supabase, but we double-check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { imageBase64 } = await req.json();
 
     if (!imageBase64) {
       return new Response(
         JSON.stringify({ error: "Image data is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate image size (limit to ~7.5MB base64 which is about 5MB raw)
+    if (imageBase64.length > 10_000_000) {
+      return new Response(
+        JSON.stringify({ error: "Image too large. Please use a smaller image." }),
+        { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

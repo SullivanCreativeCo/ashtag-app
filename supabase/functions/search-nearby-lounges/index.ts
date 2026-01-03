@@ -30,23 +30,44 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication - JWT is verified by Supabase, but we double-check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { lat, lng, radius = 16093 } = await req.json(); // Default 10 miles in meters
 
     if (!lat || !lng) {
       throw new Error("Latitude and longitude are required");
     }
 
+    // Validate coordinates
+    if (typeof lat !== 'number' || typeof lng !== 'number' || 
+        lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return new Response(
+        JSON.stringify({ error: "Invalid coordinates" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate radius (max 50km / ~31 miles)
+    const validRadius = Math.min(Math.max(Number(radius) || 16093, 1000), 50000);
+
     const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
     if (!apiKey) {
       throw new Error("GOOGLE_PLACES_API_KEY not configured");
     }
 
-    console.log(`Searching for cigar lounges near ${lat}, ${lng} within ${radius}m`);
+    console.log(`Searching for cigar lounges near ${lat}, ${lng} within ${validRadius}m`);
 
     // Search for cigar lounges/shops using Google Places Nearby Search
     const searchUrl = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
     searchUrl.searchParams.set("location", `${lat},${lng}`);
-    searchUrl.searchParams.set("radius", radius.toString());
+    searchUrl.searchParams.set("radius", validRadius.toString());
     searchUrl.searchParams.set("keyword", "cigar lounge cigar shop tobacco");
     searchUrl.searchParams.set("type", "store");
     searchUrl.searchParams.set("key", apiKey);

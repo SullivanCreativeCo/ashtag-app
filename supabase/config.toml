@@ -1,10 +1,10 @@
 project_id = "jxulfosxcpjtqsoerdgg"
 
 [functions.match-cigar-band]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-mapbox-token]
-verify_jwt = false
+verify_jwt = true
 
 [functions.search-nearby-lounges]
-verify_jwt = false
+verify_jwt = true
