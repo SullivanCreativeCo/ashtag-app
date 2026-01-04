@@ -181,8 +181,8 @@ export default function Feed() {
           )}
         </div>
 
-        {/* Stick Pick of the Week */}
-        <StickPickOfWeek />
+        {/* Stick Pick of the Week - only on Everyone tab */}
+        {feedFilter === "all" && <StickPickOfWeek />}
 
         <div className="px-2">
           {loading ? (
