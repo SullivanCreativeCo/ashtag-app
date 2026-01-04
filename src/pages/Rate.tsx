@@ -9,9 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Loader2, ArrowLeft, Camera, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Search, Plus, Loader2, ArrowLeft, Camera, X, ImagePlus } from "lucide-react";
 import { CameraCapture } from "@/components/CameraCapture";
+import { format } from "date-fns";
 
 interface Cigar {
   id: string;
@@ -31,6 +31,19 @@ interface BandImage {
 interface LocationState {
   capturedImage?: string;
   selectedCigarId?: string;
+}
+
+interface RatingHistoryItem {
+  id: string;
+  created_at: string;
+  overall_score: number | null;
+  photo_url: string | null;
+  cigar: {
+    id: string;
+    brand: string;
+    line: string;
+    vitola: string;
+  };
 }
 
 export default function Rate() {
@@ -64,6 +77,10 @@ export default function Rate() {
   const [bandImages, setBandImages] = useState<BandImage[]>([]);
   const [showCamera, setShowCamera] = useState(false);
 
+  // Rating history state
+  const [ratingHistory, setRatingHistory] = useState<RatingHistoryItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
@@ -76,6 +93,37 @@ export default function Rate() {
       loadPreselectedCigar(preselectedCigarId);
     }
   }, [preselectedCigarId]);
+
+  // Fetch user's rating history
+  useEffect(() => {
+    if (user) {
+      fetchRatingHistory();
+    } else {
+      setHistoryLoading(false);
+    }
+  }, [user]);
+
+  const fetchRatingHistory = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from("smoke_logs")
+      .select(`
+        id,
+        created_at,
+        overall_score,
+        photo_url,
+        cigar:cigars(id, brand, line, vitola)
+      `)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!error && data) {
+      setRatingHistory(data as RatingHistoryItem[]);
+    }
+    setHistoryLoading(false);
+  };
 
   const loadPreselectedCigar = async (cigarId: string) => {
     setLoadingPreselected(true);
@@ -349,6 +397,61 @@ export default function Rate() {
                 </p>
               )}
             </div>
+
+            {/* Rating History */}
+            {user && (
+              <div className="mt-8 space-y-4">
+                <h2 className="font-display text-lg font-semibold text-foreground">
+                  Your Recent Ratings
+                </h2>
+                {historyLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  </div>
+                ) : ratingHistory.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    No ratings yet. Rate your first cigar!
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {ratingHistory.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => handleSelectCigar(item.cigar as Cigar)}
+                        className="w-full flex items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary"
+                      >
+                        {item.photo_url ? (
+                          <img 
+                            src={item.photo_url} 
+                            alt="Rating photo"
+                            className="w-12 h-12 rounded-md object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
+                            <Camera className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-foreground text-sm truncate">
+                            {item.cigar.brand} {item.cigar.line}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(item.created_at), "MMM d, yyyy")}
+                          </p>
+                        </div>
+                        {item.overall_score && (
+                          <div className="flex-shrink-0 text-right">
+                            <span className="font-display font-bold text-primary">
+                              {Number(item.overall_score).toFixed(1)}
+                            </span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-6">
@@ -415,6 +518,18 @@ export default function Rate() {
                 {overallScore}
               </p>
             </div>
+
+            {/* Photo suggestion card - prominent when no photo */}
+            {!photoPreview && (
+              <div 
+                onClick={() => setShowCamera(true)}
+                className="rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/10 transition-colors"
+              >
+                <ImagePlus className="h-10 w-10 text-primary mx-auto mb-3" />
+                <h3 className="font-display font-semibold text-foreground mb-1">Add a Photo</h3>
+                <p className="text-sm text-muted-foreground">Share your smoke with the community!</p>
+              </div>
+            )}
 
             {/* Hidden file input */}
             <input
