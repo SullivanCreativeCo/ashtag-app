@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, MapPin, Flame, Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ interface Cigar {
 }
 
 export function StickPickOfWeek() {
+  const navigate = useNavigate();
   const [cigar, setCigar] = useState<Cigar | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -184,7 +186,10 @@ export function StickPickOfWeek() {
           )}
 
           {/* CTA */}
-          <button className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 text-primary font-semibold text-sm transition-all duration-300 hover:from-primary/30 hover:to-primary/20 active:scale-[0.98]">
+          <button 
+            onClick={() => navigate(`/rate?cigarId=${cigar.id}`)}
+            className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 text-primary font-semibold text-sm transition-all duration-300 hover:from-primary/30 hover:to-primary/20 active:scale-[0.98]"
+          >
             Rate This Cigar
           </button>
         </div>

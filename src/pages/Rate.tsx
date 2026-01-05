@@ -54,7 +54,10 @@ export default function Rate() {
 
   const locationState = location.state as LocationState | null;
   const capturedImage = locationState?.capturedImage || null;
-  const preselectedCigarId = locationState?.selectedCigarId || null;
+  
+  // Check for cigarId in query params first, then fall back to location state
+  const searchParams = new URLSearchParams(location.search);
+  const preselectedCigarId = searchParams.get("cigarId") || locationState?.selectedCigarId || null;
   
   const [step, setStep] = useState<"search" | "log">(preselectedCigarId ? "log" : "search");
   const [searchQuery, setSearchQuery] = useState("");
