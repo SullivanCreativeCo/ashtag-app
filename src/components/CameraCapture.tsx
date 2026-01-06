@@ -103,9 +103,10 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
 
   const handleConfirm = () => {
     if (capturedImage) {
+      // Parent should close the modal by updating isOpen after receiving the capture.
+      // This avoids accidental navigation when onClose is wired to "go back".
       onCapture(capturedImage);
       setCapturedImage(null);
-      onClose();
     }
   };
 
