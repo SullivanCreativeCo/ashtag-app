@@ -89,9 +89,11 @@ serve(async (req) => {
     ) || [];
 
     // Use AI vision to analyze the captured image and match against reference descriptions
-    const systemPrompt = `You are a cigar band recognition expert. Your task is to analyze a photo of a cigar band and identify the cigar from a database.
+    const systemPrompt = `You are a cigar band recognition expert. Your task is to analyze a photo of a cigar and identify it from a database.
 
-CRITICAL: Read ALL text visible on the cigar band very carefully:
+CRITICAL: Analyze BOTH the cigar band AND the cigar shape:
+
+BAND ANALYSIS - Read ALL text visible on the cigar band:
 - Brand name (usually the largest, most prominent text)
 - Line/Series name (often smaller, positioned below or above the brand)
 - Country of origin (e.g., "Nicaragua", "Honduras", "Dominican Republic")
@@ -99,18 +101,29 @@ CRITICAL: Read ALL text visible on the cigar band very carefully:
 - "Hecho a Mano" means handmade
 - Look for wrapper color indicators (Maduro = dark, Connecticut = light)
 
+SHAPE/VITOLA ANALYSIS - Look at the cigar body:
+- TORPEDO/BELICOSO: Tapered, pointed head (not flat cut)
+- FIGURADO/PERFECTO: Tapered at both ends
+- ROBUSTO: Short and thick, flat head (typically 5" x 50)
+- TORO: Medium length, flat head (typically 6" x 50-52)
+- CHURCHILL: Long and elegant, flat head (typically 7" x 48)
+- CORONA: Thinner, classic size, flat head
+- GORDO/60 RING: Very thick ring gauge
+- LANCERO/PANATELA: Long and thin
+
+The SHAPE is critical for matching the correct vitola. A torpedo tip means it's a Torpedo, Belicoso, or similar pointed vitola.
+
 MATCHING STRATEGY:
 1. Extract the exact brand name from the band
-2. Look for an exact match in the database brands
-3. Then match the line/series name
+2. Identify the cigar shape from the body
+3. Match brand + shape to find the correct vitola in the database
 4. Consider wrapper color and origin as secondary matches
-5. If the band shows "Padron", look for ALL Padron cigars in the database
-6. Match text case-insensitively
+5. Match text case-insensitively
 
 CONFIDENCE SCORING:
-- 90-100%: Exact brand AND line match visible on band
-- 70-89%: Brand match with probable line based on visual elements  
-- 50-69%: Brand match but unclear line
+- 90-100%: Exact brand AND line match with correct vitola shape
+- 70-89%: Brand match with shape match but uncertain line
+- 50-69%: Brand match but unclear line or shape
 - Below 50%: Uncertain match
 
 Always return your top 3 best matches from the database, even if confidence is low.
@@ -121,7 +134,8 @@ Respond ONLY with valid JSON in this exact format:
   "confidence": 0-100,
   "extractedInfo": {
     "brand": "extracted brand name or null",
-    "line": "extracted line name or null", 
+    "line": "extracted line name or null",
+    "shape": "detected shape (torpedo, robusto, toro, etc.) or null",
     "otherText": "any other visible text"
   },
   "matches": [
@@ -131,7 +145,7 @@ Respond ONLY with valid JSON in this exact format:
       "line": "line name from database",
       "vitola": "vitola from database",
       "confidence": 0-100,
-      "matchReason": "specific text/visual elements that match"
+      "matchReason": "specific text/visual elements AND shape that match"
     }
   ]
 }`;
