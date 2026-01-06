@@ -13,14 +13,30 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication - JWT is verified by Supabase, but we double-check
+    // Initialize Supabase client for auth verification
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Create client with user's auth token
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authHeader || '' },
+      },
+    });
+    
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      console.error("Auth error:", authError);
       return new Response(
-        JSON.stringify({ error: "Authentication required" }),
+        JSON.stringify({ error: "Authentication required. Please log in." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    
+    console.log("Authenticated user:", user.id);
 
     const { imageBase64 } = await req.json();
 
@@ -44,10 +60,8 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Create service role client for database access
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch all cigars with their reference images
     const { data: cigarsWithImages, error: fetchError } = await supabase
