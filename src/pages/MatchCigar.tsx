@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -28,67 +28,60 @@ export default function MatchCigar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  
+
   const [capturedImage, setCapturedImage] = useState<string | null>(
-    location.state?.capturedImage || null
+    location.state?.capturedImage || null,
   );
   const [cameraOpen, setCameraOpen] = useState(!location.state?.capturedImage);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
 
-  useEffect(() => {
-    console.log("MatchCigar useEffect - capturedImage:", !!capturedImage, "matchResult:", !!matchResult, "loading:", loading);
-    if (capturedImage && !matchResult && !loading) {
-      console.log("Triggering analyzeImage from useEffect");
-      analyzeImage(capturedImage);
-    }
-  }, [capturedImage]);
+  // Prevent double-invocation when we analyze on capture + also have capturedImage set.
+  const lastAnalyzedImageRef = useRef<string | null>(null);
 
   const analyzeImage = async (imageData: string) => {
-    console.log("analyzeImage called, image length:", imageData.length);
+    // Avoid charging/processing the same image more than once.
+    if (lastAnalyzedImageRef.current === imageData) return;
+    lastAnalyzedImageRef.current = imageData;
+
     setLoading(true);
     setError(null);
     setMatchResult(null);
 
     try {
-      console.log("Invoking match-cigar-band function...");
       const { data, error: fnError } = await supabase.functions.invoke("match-cigar-band", {
         body: { imageBase64: imageData },
       });
-      
-      console.log("Function response:", { data, fnError });
 
-      if (fnError) {
-        throw fnError;
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
 
       setMatchResult(data);
 
-      // Auto-navigate if we have a high confidence match
-      if (data.identified && data.matches?.length > 0 && data.matches[0].confidence >= 85) {
+      if (data?.identified && data?.matches?.length > 0 && data.matches[0].confidence >= 85) {
         toast({
           title: "Cigar identified!",
           description: `${data.matches[0].brand} ${data.matches[0].line}`,
         });
       }
     } catch (err) {
-      console.error("Error analyzing image:", err);
       setError(err instanceof Error ? err.message : "Failed to analyze image");
     } finally {
       setLoading(false);
     }
   };
 
+  // If we arrive here already holding a captured image (deep link from elsewhere), analyze it once.
+  useEffect(() => {
+    if (capturedImage) analyzeImage(capturedImage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleCameraCapture = (imageData: string) => {
-    console.log("handleCameraCapture called, image data length:", imageData.length);
     setCameraOpen(false);
     setCapturedImage(imageData);
-    // Don't call analyzeImage here - useEffect will handle it
+    analyzeImage(imageData);
   };
 
   const handleSelectMatch = (cigarId: string) => {
@@ -112,6 +105,7 @@ export default function MatchCigar() {
     setCapturedImage(null);
     setMatchResult(null);
     setError(null);
+    lastAnalyzedImageRef.current = null;
     setCameraOpen(true);
   };
 
@@ -121,7 +115,6 @@ export default function MatchCigar() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-40 glass safe-top">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
@@ -131,17 +124,12 @@ export default function MatchCigar() {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="font-display text-lg font-semibold text-foreground">
-              Identify Cigar
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Capture the band for auto-recognition
-            </p>
+            <h1 className="font-display text-lg font-semibold text-foreground">Identify Cigar</h1>
+            <p className="text-xs text-muted-foreground">Capture the band for auto-recognition</p>
           </div>
         </div>
       </header>
 
-      {/* Content */}
       <main className="px-4 py-4 pb-20">
         {capturedImage ? (
           <CigarMatchResults
@@ -155,17 +143,14 @@ export default function MatchCigar() {
           />
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground">
-              Opening camera...
-            </p>
+            <p className="text-muted-foreground">Opening camera...</p>
           </div>
         )}
       </main>
 
-      {/* Camera Modal */}
       <CameraCapture
         isOpen={cameraOpen}
-        onClose={handleClose}
+        onClose={() => setCameraOpen(false)}
         onCapture={handleCameraCapture}
       />
     </div>
