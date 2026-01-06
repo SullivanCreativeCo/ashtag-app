@@ -38,20 +38,26 @@ export default function MatchCigar() {
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
 
   useEffect(() => {
+    console.log("MatchCigar useEffect - capturedImage:", !!capturedImage, "matchResult:", !!matchResult, "loading:", loading);
     if (capturedImage && !matchResult && !loading) {
+      console.log("Triggering analyzeImage from useEffect");
       analyzeImage(capturedImage);
     }
   }, [capturedImage]);
 
   const analyzeImage = async (imageData: string) => {
+    console.log("analyzeImage called, image length:", imageData.length);
     setLoading(true);
     setError(null);
     setMatchResult(null);
 
     try {
+      console.log("Invoking match-cigar-band function...");
       const { data, error: fnError } = await supabase.functions.invoke("match-cigar-band", {
         body: { imageBase64: imageData },
       });
+      
+      console.log("Function response:", { data, fnError });
 
       if (fnError) {
         throw fnError;
@@ -79,9 +85,10 @@ export default function MatchCigar() {
   };
 
   const handleCameraCapture = (imageData: string) => {
+    console.log("handleCameraCapture called, image data length:", imageData.length);
     setCameraOpen(false);
     setCapturedImage(imageData);
-    analyzeImage(imageData);
+    // Don't call analyzeImage here - useEffect will handle it
   };
 
   const handleSelectMatch = (cigarId: string) => {
