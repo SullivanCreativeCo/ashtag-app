@@ -84,13 +84,30 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Compress image: resize to max 1024px on longest side for faster upload
+    const MAX_SIZE = 1024;
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+    
+    let targetWidth = videoWidth;
+    let targetHeight = videoHeight;
+    
+    if (videoWidth > videoHeight && videoWidth > MAX_SIZE) {
+      targetWidth = MAX_SIZE;
+      targetHeight = Math.round((videoHeight / videoWidth) * MAX_SIZE);
+    } else if (videoHeight > MAX_SIZE) {
+      targetHeight = MAX_SIZE;
+      targetWidth = Math.round((videoWidth / videoHeight) * MAX_SIZE);
+    }
+    
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
     
     const ctx = canvas.getContext("2d");
     if (ctx) {
-      ctx.drawImage(video, 0, 0);
-      const imageData = canvas.toDataURL("image/jpeg", 0.9);
+      ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+      // Lower quality (0.7) for faster upload while maintaining readability
+      const imageData = canvas.toDataURL("image/jpeg", 0.7);
       setCapturedImage(imageData);
       stopCamera();
     }
