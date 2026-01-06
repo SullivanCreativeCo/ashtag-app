@@ -171,15 +171,11 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
               className="h-full w-full object-cover"
             />
             
-            {/* Guide overlay */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-[80%] max-w-[300px] aspect-[3/2] border-2 border-white/40 rounded-xl">
-                <div className="absolute -bottom-8 left-0 right-0 text-center">
-                  <p className="text-white/70 text-xs">
-                    Center the cigar band in the frame
-                  </p>
-                </div>
-              </div>
+            {/* Full-screen hint */}
+            <div className="absolute bottom-24 left-0 right-0 text-center pointer-events-none">
+              <p className="text-white/70 text-sm px-4">
+                Position the full cigar in view
+              </p>
             </div>
           </>
         )}
