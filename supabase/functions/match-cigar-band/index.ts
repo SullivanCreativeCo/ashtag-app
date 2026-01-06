@@ -75,18 +75,31 @@ serve(async (req) => {
     ) || [];
 
     // Use AI vision to analyze the captured image and match against reference descriptions
-    const systemPrompt = `You are a cigar band recognition expert. Your task is to analyze a photo of a cigar band and identify the cigar.
+    const systemPrompt = `You are a cigar band recognition expert. Your task is to analyze a photo of a cigar band and identify the cigar from a database.
 
-You have access to a database of cigars. Analyze the image carefully looking for:
-- Brand name (usually prominently displayed)
-- Line name (often below or near the brand)
-- Any distinctive visual elements (colors, logos, patterns)
-- Country of origin indicators
-- Any text or markings
+CRITICAL: Read ALL text visible on the cigar band very carefully:
+- Brand name (usually the largest, most prominent text)
+- Line/Series name (often smaller, positioned below or above the brand)
+- Country of origin (e.g., "Nicaragua", "Honduras", "Dominican Republic")
+- Any numbers, dates, or edition info
+- "Hecho a Mano" means handmade
+- Look for wrapper color indicators (Maduro = dark, Connecticut = light)
 
-Based on your analysis, try to match the cigar band in the image to one of the cigars in the database.
+MATCHING STRATEGY:
+1. Extract the exact brand name from the band
+2. Look for an exact match in the database brands
+3. Then match the line/series name
+4. Consider wrapper color and origin as secondary matches
+5. If the band shows "Padron", look for ALL Padron cigars in the database
+6. Match text case-insensitively
 
-IMPORTANT: If you cannot confidently identify the cigar, return your best guesses with confidence levels, or indicate that no match was found.
+CONFIDENCE SCORING:
+- 90-100%: Exact brand AND line match visible on band
+- 70-89%: Brand match with probable line based on visual elements  
+- 50-69%: Brand match but unclear line
+- Below 50%: Uncertain match
+
+Always return your top 3 best matches from the database, even if confidence is low.
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -99,12 +112,12 @@ Respond ONLY with valid JSON in this exact format:
   },
   "matches": [
     {
-      "cigarId": "uuid",
-      "brand": "brand name",
-      "line": "line name",
-      "vitola": "vitola",
+      "cigarId": "uuid from database",
+      "brand": "brand name from database",
+      "line": "line name from database",
+      "vitola": "vitola from database",
       "confidence": 0-100,
-      "matchReason": "why this is a match"
+      "matchReason": "specific text/visual elements that match"
     }
   ]
 }`;

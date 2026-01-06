@@ -60,6 +60,9 @@ export default function Rate() {
   const preselectedCigarId = searchParams.get("cigarId") || locationState?.selectedCigarId || null;
   
   const [step, setStep] = useState<"search" | "log">(preselectedCigarId ? "log" : "search");
+  
+  // Auto-set captured image as photo preview (like Instagram post)
+  const [initializedCapturedPhoto, setInitializedCapturedPhoto] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [cigars, setCigars] = useState<Cigar[]>([]);
   const [selectedCigar, setSelectedCigar] = useState<Cigar | null>(null);
@@ -96,6 +99,21 @@ export default function Rate() {
       loadPreselectedCigar(preselectedCigarId);
     }
   }, [preselectedCigarId]);
+
+  // Auto-set captured image as the rating photo (Instagram-style)
+  useEffect(() => {
+    if (capturedImage && !initializedCapturedPhoto) {
+      // Convert base64 to file for upload
+      fetch(capturedImage)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], `cigar-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          setPhotoFile(file);
+          setPhotoPreview(capturedImage);
+          setInitializedCapturedPhoto(true);
+        });
+    }
+  }, [capturedImage, initializedCapturedPhoto]);
 
   // Fetch user's rating history
   useEffect(() => {
