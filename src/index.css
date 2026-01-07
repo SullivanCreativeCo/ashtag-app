@@ -68,8 +68,8 @@
     --shadow-float: 0 20px 40px -15px hsl(0 0% 0% / 0.5);
 
     /* Gradients */
-    --gradient-ember: linear-gradient(135deg, hsl(25 100% 50%), hsl(38 100% 55%));
-    --gradient-ember-radial: radial-gradient(circle at 30% 30%, hsl(30 100% 60%), hsl(20 100% 40%));
+    --gradient-ember: linear-gradient(135deg, hsl(36 72% 57%), hsl(42 80% 62%));
+    --gradient-ember-radial: radial-gradient(circle at 30% 30%, hsl(42 80% 62%), hsl(32 70% 50%));
     --gradient-dark: linear-gradient(180deg, hsl(240 6% 9%), hsl(240 10% 3%));
     --gradient-card: linear-gradient(165deg, hsl(240 6% 10%), hsl(240 6% 5%));
     --gradient-shine: linear-gradient(135deg, transparent 40%, hsl(0 0% 100% / 0.03) 50%, transparent 60%);
