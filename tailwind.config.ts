@@ -19,7 +19,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Abril Fatface", "serif"],
+        display: ["Fascinate", "cursive"],
         body: ["Old Standard TT", "serif"],
       },
       colors: {
