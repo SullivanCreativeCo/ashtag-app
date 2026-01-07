@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Camera, Flame, DoorOpen, MapPin } from "lucide-react";
+import { Flame, DoorOpen, MapPin, Cigarette } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   {
-    label: "The Lounge",
-    icon: Camera,
+    label: "Smoke",
+    icon: Cigarette,
     path: "/feed",
   },
   {
@@ -14,12 +14,12 @@ const navItems = [
     path: "/rate",
   },
   {
-    label: "Humidor",
+    label: "Save",
     icon: DoorOpen,
     path: "/humidor",
   },
   {
-    label: "Near Me",
+    label: "Map",
     icon: MapPin,
     path: "/near-me",
   },

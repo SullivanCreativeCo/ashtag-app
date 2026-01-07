@@ -19,7 +19,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Fascinate", "cursive"],
+        display: ["Limelight", "cursive"],
         body: ["Old Standard TT", "serif"],
       },
       colors: {
