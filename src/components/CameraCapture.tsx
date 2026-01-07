@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { X, Camera, RotateCcw, Check, SwitchCamera } from "lucide-react";
+import { X, Camera, RotateCcw, Check, SwitchCamera, Aperture } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -140,29 +140,37 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black flex flex-col">
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 safe-top">
+    <div 
+      className={cn(
+        "fixed inset-0 z-[100] bg-black flex flex-col",
+        "animate-in fade-in zoom-in-95 duration-300"
+      )}
+    >
+      {/* Close button - top left */}
+      <div className="absolute top-4 left-4 z-10 safe-top">
         <button
           onClick={handleClose}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-transform active:scale-95"
         >
           <X className="h-5 w-5 text-white" />
         </button>
-        
-        <p className="text-white font-medium text-sm">
-          Capture Cigar Band
-        </p>
-        
-        <div className="w-10" />
       </div>
+
+      {/* Instruction text - high up on screen */}
+      {!capturedImage && !error && (
+        <div className="absolute top-20 left-0 right-0 z-10 text-center pointer-events-none safe-top">
+          <h2 className="text-display text-white text-xl tracking-wide drop-shadow-lg">
+            Position the full cigar in view
+          </h2>
+        </div>
+      )}
 
       {/* Camera View */}
       <div className="flex-1 relative overflow-hidden">
         {error ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
             <Camera className="h-16 w-16 text-muted-foreground mb-4" />
-            <p className="text-white text-lg font-medium mb-2">Camera Access Required</p>
+            <h2 className="text-display text-white text-xl mb-2">Camera Access Required</h2>
             <p className="text-muted-foreground text-sm">{error}</p>
             <Button
               onClick={startCamera}
@@ -176,78 +184,71 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
           <img
             src={capturedImage}
             alt="Captured"
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain animate-in fade-in duration-200"
           />
         ) : (
-          <>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="h-full w-full object-cover"
-            />
-            
-            {/* Full-screen hint */}
-            <div className="absolute bottom-24 left-0 right-0 text-center pointer-events-none">
-              <p className="text-white/70 text-sm px-4">
-                Position the full cigar in view
-              </p>
-            </div>
-          </>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="h-full w-full object-cover"
+          />
         )}
       </div>
 
-      {/* Controls */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 safe-bottom">
-        <div className="flex items-center justify-around">
-          {capturedImage ? (
-            <>
-              <button
-                onClick={handleRetake}
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform active:scale-95"
-              >
-                <RotateCcw className="h-6 w-6 text-white" />
-              </button>
-              
-              <button
-                onClick={handleConfirm}
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-primary transition-transform active:scale-95"
-              >
-                <Check className="h-8 w-8 text-white" />
-              </button>
-              
-              <div className="w-14" />
-            </>
-          ) : (
-            <>
-              {hasMultipleCameras ? (
-                <button
-                  onClick={handleSwitchCamera}
-                  className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform active:scale-95"
-                >
-                  <SwitchCamera className="h-6 w-6 text-white" />
-                </button>
-              ) : (
-                <div className="w-14" />
-              )}
-              
-              <button
-                onClick={handleCapture}
-                disabled={!stream}
-                className={cn(
-                  "flex h-20 w-20 items-center justify-center rounded-full border-4 border-white transition-transform active:scale-95",
-                  stream ? "bg-white/20" : "bg-white/5 opacity-50"
-                )}
-              >
-                <div className="h-16 w-16 rounded-full bg-white" />
-              </button>
-              
-              <div className="w-14" />
-            </>
-          )}
+      {/* Side radial capture button - right side of screen */}
+      {!capturedImage && !error && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-3">
+          <button
+            onClick={handleCapture}
+            disabled={!stream}
+            className={cn(
+              "flex h-16 w-16 items-center justify-center rounded-full transition-all duration-200 active:scale-90",
+              "bg-gradient-ember shadow-ember",
+              stream ? "opacity-100" : "opacity-40"
+            )}
+          >
+            <Aperture className="h-8 w-8 text-white" />
+          </button>
+          <span className="text-display text-white text-xs tracking-wide text-center max-w-[80px] drop-shadow-lg">
+            Capture Cigar Band
+          </span>
         </div>
-      </div>
+      )}
+
+      {/* Switch camera button - bottom right when in capture mode */}
+      {!capturedImage && !error && hasMultipleCameras && (
+        <div className="absolute bottom-8 right-4 z-10 safe-bottom">
+          <button
+            onClick={handleSwitchCamera}
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform active:scale-95"
+          >
+            <SwitchCamera className="h-5 w-5 text-white" />
+          </button>
+        </div>
+      )}
+
+      {/* Post-capture controls - bottom center */}
+      {capturedImage && (
+        <div className="absolute bottom-0 left-0 right-0 p-6 safe-bottom">
+          <div className="flex items-center justify-center gap-8">
+            <button
+              onClick={handleRetake}
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform active:scale-95"
+            >
+              <RotateCcw className="h-6 w-6 text-white" />
+            </button>
+            
+            <button
+              onClick={handleConfirm}
+              className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-ember shadow-ember transition-transform active:scale-95"
+            >
+              <Check className="h-8 w-8 text-white" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hidden canvas for capture */}
       <canvas ref={canvasRef} className="hidden" />
