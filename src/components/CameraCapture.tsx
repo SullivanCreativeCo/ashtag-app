@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { X, Camera, RotateCcw, Check, SwitchCamera, Aperture } from "lucide-react";
+import { X, Camera, RotateCcw, Check, SwitchCamera, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -156,13 +156,9 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
         </button>
       </div>
 
-      {/* Instruction text - high up on screen */}
+      {/* Frame border around screen */}
       {!capturedImage && !error && (
-        <div className="absolute top-20 left-0 right-0 z-10 text-center pointer-events-none safe-top">
-          <h2 className="text-display text-white text-xl tracking-wide drop-shadow-lg">
-            Position the full cigar in view
-          </h2>
-        </div>
+        <div className="absolute inset-4 z-10 pointer-events-none rounded-2xl border-2 border-white/30" />
       )}
 
       {/* Camera View */}
@@ -197,21 +193,25 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
         )}
       </div>
 
-      {/* Side radial capture button - right side of screen */}
+      {/* Bottom capture button */}
       {!capturedImage && !error && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-3">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 safe-bottom">
           <button
             onClick={handleCapture}
             disabled={!stream}
             className={cn(
-              "flex h-16 w-16 items-center justify-center rounded-full transition-all duration-200 active:scale-90",
-              "bg-gradient-ember shadow-ember",
+              "flex h-20 w-20 items-center justify-center rounded-full transition-all duration-200 active:scale-90",
+              "bg-white/20 backdrop-blur-sm border-2 border-white/40",
               stream ? "opacity-100" : "opacity-40"
             )}
           >
-            <Aperture className="h-8 w-8 text-white" />
+            {/* Cigar band icon - concentric circles */}
+            <div className="relative">
+              <Circle className="h-10 w-10 text-white" strokeWidth={1.5} />
+              <Circle className="h-6 w-6 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" strokeWidth={1.5} />
+            </div>
           </button>
-          <span className="text-display text-white text-xs tracking-wide text-center max-w-[80px] drop-shadow-lg">
+          <span className="text-display text-white/70 text-xs tracking-wide text-center drop-shadow-lg">
             Capture Cigar Band
           </span>
         </div>
