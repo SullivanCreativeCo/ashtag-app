@@ -7,13 +7,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +25,10 @@ import {
   Image as ImageIcon,
   Plus,
   Shield,
+  Check,
+  X,
+  Clock,
+  MessageSquare,
 } from "lucide-react";
 
 interface Cigar {
@@ -49,6 +48,16 @@ interface CigarBandImage {
   cigar?: Cigar;
 }
 
+interface CigarRequest {
+  id: string;
+  user_id: string;
+  requested_name: string;
+  details: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  display_name?: string | null;
+}
+
 export default function AdminBandImages() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -62,6 +71,11 @@ export default function AdminBandImages() {
   const [cigars, setCigars] = useState<Cigar[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCigars, setFilteredCigars] = useState<Cigar[]>([]);
+  const [activeTab, setActiveTab] = useState("images");
+  
+  // Cigar requests state
+  const [cigarRequests, setCigarRequests] = useState<CigarRequest[]>([]);
+  const [updatingRequestId, setUpdatingRequestId] = useState<string | null>(null);
   
   // Upload form state
   const [selectedCigarId, setSelectedCigarId] = useState("");
@@ -83,6 +97,7 @@ export default function AdminBandImages() {
   useEffect(() => {
     if (isAdmin) {
       fetchData();
+      fetchCigarRequests();
     }
   }, [isAdmin]);
 
@@ -140,6 +155,58 @@ export default function AdminBandImages() {
     }
 
     setLoading(false);
+  };
+
+  const fetchCigarRequests = async () => {
+    const { data: requestsData, error } = await supabase
+      .from("cigar_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && requestsData) {
+      // Fetch profiles for each request
+      const userIds = [...new Set(requestsData.map(r => r.user_id))];
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", userIds);
+
+      const profileMap = new Map(profilesData?.map(p => [p.id, p.display_name]) || []);
+      
+      const requestsWithProfiles = requestsData.map(r => ({
+        ...r,
+        display_name: profileMap.get(r.user_id) || null,
+      }));
+
+      setCigarRequests(requestsWithProfiles as CigarRequest[]);
+    }
+  };
+
+  const handleUpdateRequestStatus = async (requestId: string, status: "approved" | "rejected") => {
+    setUpdatingRequestId(requestId);
+    
+    const { error } = await supabase
+      .from("cigar_requests")
+      .update({ status })
+      .eq("id", requestId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update request status",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: status === "approved" ? "Request Approved" : "Request Rejected",
+        description: status === "approved" 
+          ? "Don't forget to add the cigar to the database!" 
+          : "The request has been rejected",
+      });
+      fetchCigarRequests();
+    }
+    
+    setUpdatingRequestId(null);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -266,6 +333,8 @@ export default function AdminBandImages() {
     }
   };
 
+  const pendingRequestsCount = cigarRequests.filter(r => r.status === "pending").length;
+
   if (loading) {
     return (
       <AppLayout>
@@ -297,222 +366,328 @@ export default function AdminBandImages() {
 
   return (
     <AppLayout>
-      <div className="py-4 space-y-6">
+      <div className="py-4 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-muted transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div>
-              <h1 className="font-display text-xl font-bold text-foreground">
-                Band Image Database
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                {bandImages.length} reference images
-              </p>
-            </div>
-          </div>
-
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Image
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Upload Band Image</DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-4 pt-4">
-                {/* Cigar Search */}
-                <div className="space-y-2">
-                  <Label>Select Cigar</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search by brand or line..."
-                      className="pl-9"
-                    />
-                  </div>
-                  
-                  {filteredCigars.length > 0 && !selectedCigarId && (
-                    <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-card">
-                      {filteredCigars.map((cigar) => (
-                        <button
-                          key={cigar.id}
-                          onClick={() => {
-                            setSelectedCigarId(cigar.id);
-                            setSearchQuery(`${cigar.brand} ${cigar.line}`);
-                          }}
-                          className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors"
-                        >
-                          <span className="font-medium">{cigar.brand} {cigar.line}</span>
-                          <span className="text-muted-foreground ml-2">{cigar.vitola}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {selectedCigarId && (
-                    <div className="flex items-center justify-between rounded-lg border border-primary bg-primary/5 px-3 py-2">
-                      <span className="text-sm font-medium">{searchQuery}</span>
-                      <button
-                        onClick={() => {
-                          setSelectedCigarId("");
-                          setSearchQuery("");
-                        }}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        Change
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Image Upload */}
-                <div className="space-y-2">
-                  <Label>Band Image</Label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  
-                  {previewUrl ? (
-                    <div className="relative aspect-video rounded-lg overflow-hidden border border-border">
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={() => {
-                          setSelectedFile(null);
-                          setPreviewUrl(null);
-                        }}
-                        className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white hover:bg-black/70"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full aspect-video rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-2"
-                    >
-                      <Upload className="h-8 w-8 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        Click to upload image
-                      </span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Description */}
-                <div className="space-y-2">
-                  <Label>Description (optional)</Label>
-                  <Input
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="e.g., Front view, Gold band variant..."
-                  />
-                </div>
-
-                {/* Primary Toggle */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isPrimary"
-                    checked={isPrimary}
-                    onChange={(e) => setIsPrimary(e.target.checked)}
-                    className="rounded border-border"
-                  />
-                  <Label htmlFor="isPrimary" className="text-sm font-normal">
-                    Set as primary reference image
-                  </Label>
-                </div>
-
-                {/* Submit */}
-                <Button
-                  onClick={handleUpload}
-                  disabled={!selectedCigarId || !selectedFile || uploading}
-                  className="w-full"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Image
-                    </>
-                  )}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Image Grid */}
-        {bandImages.length === 0 ? (
-          <div className="card-elevated flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 rounded-full bg-muted p-4">
-              <ImageIcon className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">No images yet</h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-              Start building your recognition database by uploading cigar band images.
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-muted transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">
+              Admin Panel
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Manage cigars and requests
             </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {bandImages.map((image) => (
-              <div
-                key={image.id}
-                className="card-elevated overflow-hidden group"
-              >
-                <div className="relative aspect-square">
-                  <img
-                    src={image.image_url}
-                    alt={image.cigar?.brand || "Cigar band"}
-                    className="w-full h-full object-cover"
-                  />
-                  {image.is_primary && (
-                    <span className="absolute top-2 left-2 text-[10px] font-medium bg-primary text-white px-2 py-0.5 rounded-full">
-                      Primary
-                    </span>
-                  )}
-                  <button
-                    onClick={() => handleDelete(image.id, image.image_url)}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full">
+            <TabsTrigger value="images" className="flex-1 gap-2">
+              <ImageIcon className="h-4 w-4" />
+              Band Images
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="flex-1 gap-2 relative">
+              <MessageSquare className="h-4 w-4" />
+              Requests
+              {pendingRequestsCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
+                  {pendingRequestsCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Band Images Tab */}
+          <TabsContent value="images" className="space-y-4 mt-4">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-muted-foreground">
+                {bandImages.length} reference images
+              </p>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Image
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Upload Band Image</DialogTitle>
+                  </DialogHeader>
+
+                  <div className="space-y-4 pt-4">
+                    {/* Cigar Search */}
+                    <div className="space-y-2">
+                      <Label>Select Cigar</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search by brand or line..."
+                          className="pl-9"
+                        />
+                      </div>
+                      
+                      {filteredCigars.length > 0 && !selectedCigarId && (
+                        <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-card">
+                          {filteredCigars.map((cigar) => (
+                            <button
+                              key={cigar.id}
+                              onClick={() => {
+                                setSelectedCigarId(cigar.id);
+                                setSearchQuery(`${cigar.brand} ${cigar.line}`);
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors"
+                            >
+                              <span className="font-medium">{cigar.brand} {cigar.line}</span>
+                              <span className="text-muted-foreground ml-2">{cigar.vitola}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {selectedCigarId && (
+                        <div className="flex items-center justify-between rounded-lg border border-primary bg-primary/5 px-3 py-2">
+                          <span className="text-sm font-medium">{searchQuery}</span>
+                          <button
+                            onClick={() => {
+                              setSelectedCigarId("");
+                              setSearchQuery("");
+                            }}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            Change
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Image Upload */}
+                    <div className="space-y-2">
+                      <Label>Band Image</Label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      
+                      {previewUrl ? (
+                        <div className="relative aspect-video rounded-lg overflow-hidden border border-border">
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={() => {
+                              setSelectedFile(null);
+                              setPreviewUrl(null);
+                            }}
+                            className="absolute top-2 right-2 p-1 rounded-full bg-black/50 text-white hover:bg-black/70"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full aspect-video rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-muted/50 transition-colors flex flex-col items-center justify-center gap-2"
+                        >
+                          <Upload className="h-8 w-8 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            Click to upload image
+                          </span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-2">
+                      <Label>Description (optional)</Label>
+                      <Input
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="e.g., Front view, Gold band variant..."
+                      />
+                    </div>
+
+                    {/* Primary Toggle */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="isPrimary"
+                        checked={isPrimary}
+                        onChange={(e) => setIsPrimary(e.target.checked)}
+                        className="rounded border-border"
+                      />
+                      <Label htmlFor="isPrimary" className="text-sm font-normal">
+                        Set as primary reference image
+                      </Label>
+                    </div>
+
+                    {/* Submit */}
+                    <Button
+                      onClick={handleUpload}
+                      disabled={!selectedCigarId || !selectedFile || uploading}
+                      className="w-full"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Image
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Image Grid */}
+            {bandImages.length === 0 ? (
+              <div className="card-elevated flex flex-col items-center justify-center py-16 text-center">
+                <div className="mb-4 rounded-full bg-muted p-4">
+                  <ImageIcon className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <div className="p-3">
-                  <p className="text-sm font-medium text-foreground line-clamp-1">
-                    {image.cigar?.brand} {image.cigar?.line}
-                  </p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    {image.cigar?.vitola}
-                  </p>
-                </div>
+                <h3 className="text-lg font-semibold text-foreground">No images yet</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                  Start building your recognition database by uploading cigar band images.
+                </p>
               </div>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {bandImages.map((image) => (
+                  <div
+                    key={image.id}
+                    className="card-elevated overflow-hidden group"
+                  >
+                    <div className="relative aspect-square">
+                      <img
+                        src={image.image_url}
+                        alt={image.cigar?.brand || "Cigar band"}
+                        className="w-full h-full object-cover"
+                      />
+                      {image.is_primary && (
+                        <span className="absolute top-2 left-2 text-[10px] font-medium bg-primary text-white px-2 py-0.5 rounded-full">
+                          Primary
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleDelete(image.id, image.image_url)}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-foreground line-clamp-1">
+                        {image.cigar?.brand} {image.cigar?.line}
+                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-1">
+                        {image.cigar?.vitola}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Cigar Requests Tab */}
+          <TabsContent value="requests" className="space-y-4 mt-4">
+            {cigarRequests.length === 0 ? (
+              <div className="card-elevated flex flex-col items-center justify-center py-16 text-center">
+                <div className="mb-4 rounded-full bg-muted p-4">
+                  <MessageSquare className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">No requests yet</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                  When users request new cigars, they'll appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {cigarRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="card-elevated p-4 space-y-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground">
+                          {request.requested_name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          by {request.display_name || "Anonymous"} • {new Date(request.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          request.status === "pending" ? "secondary" :
+                          request.status === "approved" ? "default" : "destructive"
+                        }
+                        className="capitalize"
+                      >
+                        {request.status === "pending" && <Clock className="h-3 w-3 mr-1" />}
+                        {request.status === "approved" && <Check className="h-3 w-3 mr-1" />}
+                        {request.status === "rejected" && <X className="h-3 w-3 mr-1" />}
+                        {request.status}
+                      </Badge>
+                    </div>
+
+                    {request.details && (
+                      <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                        {request.details}
+                      </p>
+                    )}
+
+                    {request.status === "pending" && (
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          onClick={() => handleUpdateRequestStatus(request.id, "approved")}
+                          disabled={updatingRequestId === request.id}
+                          className="flex-1 gap-1"
+                        >
+                          {updatingRequestId === request.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleUpdateRequestStatus(request.id, "rejected")}
+                          disabled={updatingRequestId === request.id}
+                          className="flex-1 gap-1"
+                        >
+                          <X className="h-4 w-4" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
