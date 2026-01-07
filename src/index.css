@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Limelight&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* Ash Tag Dark Theme - Rich Black with Ember Orange */
+    /* Ash Tag Dark Theme - Rich Black with Golden Amber */
     --background: 240 10% 3%;
     --foreground: 0 0% 98%;
 
@@ -16,19 +16,19 @@
     --popover: 240 6% 9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Ember Orange - Primary (richer, warmer) */
-    --primary: 25 100% 50%;
+    /* Golden Amber - Primary (#dfa245) */
+    --primary: 36 72% 57%;
     --primary-foreground: 0 0% 100%;
 
-    /* Deep Charcoal Secondary */
-    --secondary: 240 5% 12%;
-    --secondary-foreground: 0 0% 90%;
+    /* White Secondary */
+    --secondary: 0 0% 100%;
+    --secondary-foreground: 240 10% 10%;
 
     --muted: 240 5% 15%;
     --muted-foreground: 240 5% 55%;
 
-    /* Warm amber accent */
-    --accent: 35 100% 45%;
+    /* Warm golden accent */
+    --accent: 36 72% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 85% 55%;
@@ -36,29 +36,29 @@
 
     --border: 240 5% 18%;
     --input: 240 5% 14%;
-    --ring: 25 100% 50%;
+    --ring: 36 72% 57%;
 
     --radius: 1rem;
 
     /* Custom Ash Tag tokens */
-    --ember: 25 100% 50%;
-    --ember-glow: 45 100% 70%;
-    --ember-deep: 20 100% 40%;
+    --ember: 36 72% 57%;
+    --ember-glow: 42 80% 65%;
+    --ember-deep: 32 70% 45%;
     --ash: 240 5% 30%;
     --smoke: 240 5% 50%;
     --charcoal: 240 6% 7%;
     --charcoal-light: 240 5% 12%;
-    --match-active: 45 100% 60%;
+    --match-active: 36 72% 57%;
     --match-inactive: 240 5% 25%;
-    --match-wood: 25 60% 35%;
-    --match-head-lit: 10 90% 30%;
+    --match-wood: 32 60% 35%;
+    --match-head-lit: 36 72% 50%;
 
     /* Premium gold accent */
-    --gold: 42 100% 55%;
-    --gold-muted: 42 50% 45%;
+    --gold: 36 72% 57%;
+    --gold-muted: 36 50% 45%;
 
     /* Typography */
-    --font-display: 'Abril Fatface', serif;
+    --font-display: 'Limelight', cursive;
     --font-body: 'Old Standard TT', serif;
 
     /* Enhanced Shadows */
