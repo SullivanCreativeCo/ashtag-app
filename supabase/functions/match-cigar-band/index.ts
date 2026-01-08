@@ -20,9 +20,29 @@ serve(async (req) => {
     
     // Create client with user's auth token
     const authHeader = req.headers.get('Authorization');
+    
+    // Check if auth header exists and is properly formatted
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required. Please log in." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Basic JWT validation - check if it has the required structure
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      return new Response(
+        JSON.stringify({ error: "Session expired. Please log in again." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
-        headers: { Authorization: authHeader || '' },
+        headers: { Authorization: authHeader },
       },
     });
     
@@ -30,8 +50,12 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
     if (authError || !user) {
       console.error("Auth error:", authError);
+      // Provide more helpful error message based on error type
+      const message = authError?.code === 'bad_jwt' 
+        ? "Session expired. Please log in again."
+        : "Authentication required. Please log in.";
       return new Response(
-        JSON.stringify({ error: "Authentication required. Please log in." }),
+        JSON.stringify({ error: message }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
