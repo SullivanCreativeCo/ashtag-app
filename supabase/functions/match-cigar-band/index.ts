@@ -19,48 +19,72 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
     // Create client with user's auth token
-    const authHeader = req.headers.get('Authorization');
-    
+    const authHeader = req.headers.get("Authorization");
+
     // Check if auth header exists and is properly formatted
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "Authentication required. Please log in." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    
-    const token = authHeader.replace('Bearer ', '');
-    
-    // Basic JWT validation - check if it has the required structure
-    const tokenParts = token.split('.');
+
+    const token = authHeader.slice("Bearer ".length).trim();
+
+    // Quick sanity check (must look like a JWT)
+    const tokenParts = token.split(".");
     if (tokenParts.length !== 3) {
       return new Response(
         JSON.stringify({ error: "Session expired. Please log in again." }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    
+
+    // Decode JWT payload to detect anon key usage (anon JWTs don't include `sub`)
+    const decodeJwtPayload = (jwt: string) => {
+      const payload = jwt.split(".")[1];
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64 + "===".slice((base64.length + 3) % 4);
+      const json = atob(padded);
+      return JSON.parse(json) as Record<string, unknown>;
+    };
+
+    let payload: Record<string, unknown> | null = null;
+    try {
+      payload = decodeJwtPayload(token);
+    } catch {
+      payload = null;
+    }
+
+    if (payload && payload["role"] === "anon" && !payload["sub"]) {
+      return new Response(
+        JSON.stringify({ error: "You must be signed in to scan a band." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authHeader },
-      },
+      global: { headers: { Authorization: authHeader } },
     });
-    
-    // Verify the user is authenticated
+
+    const userId = typeof payload?.["sub"] === "string" ? (payload!["sub"] as string) : null;
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "You must be signed in to scan a band." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Verify the user is authenticated (server-side)
     const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
     if (authError || !user) {
-      console.error("Auth error:", authError);
-      // Provide more helpful error message based on error type
-      const message = authError?.code === 'bad_jwt' 
-        ? "Session expired. Please log in again."
-        : "Authentication required. Please log in.";
       return new Response(
-        JSON.stringify({ error: message }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Session expired. Please log in again." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    
-    console.log("Authenticated user:", user.id);
+
+    console.log("Authenticated user:", userId);
 
     const { imageBase64 } = await req.json();
 
