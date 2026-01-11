@@ -22,6 +22,7 @@ interface Cigar {
 export function StickPickOfWeek() {
   const navigate = useNavigate();
   const [cigar, setCigar] = useState<Cigar | null>(null);
+  const [bandImageUrl, setBandImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,25 +31,13 @@ export function StickPickOfWeek() {
 
   const fetchWeeklyPick = async () => {
     try {
-      // Use the current week number as a seed for consistent weekly picks
-      const now = new Date();
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const weekNumber = Math.ceil(
-        ((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7
-      );
-      
-      // Fetch all cigars and pick one based on week
-      const { data, error } = await supabase
-        .from("cigars")
-        .select("*")
-        .order("brand");
+      const { data, error } = await supabase.functions.invoke("get-weekly-pick");
 
       if (error) throw error;
 
-      if (data && data.length > 0) {
-        // Use week number to deterministically pick a cigar
-        const index = weekNumber % data.length;
-        setCigar(data[index]);
+      if (data?.cigar) {
+        setCigar(data.cigar);
+        setBandImageUrl(data.bandImageUrl);
       }
     } catch (error) {
       console.error("Error fetching weekly pick:", error);
@@ -75,14 +64,17 @@ export function StickPickOfWeek() {
     "Full": "text-red-400",
   };
 
+  // Use band image if available, otherwise fall back to hero image
+  const heroImage = bandImageUrl || stickPickHero;
+
   return (
     <div className="mx-2 mb-6 stagger-item">
       <div className="card-elevated overflow-hidden">
         {/* Hero image */}
         <div className="relative h-44 w-full overflow-hidden">
           <img 
-            src={stickPickHero} 
-            alt="Featured cigar" 
+            src={heroImage} 
+            alt={`${cigar.brand} ${cigar.line}`} 
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />

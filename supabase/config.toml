@@ -3,6 +3,9 @@ project_id = "jxulfosxcpjtqsoerdgg"
 [functions.match-cigar-band]
 verify_jwt = false
 
+[functions.get-weekly-pick]
+verify_jwt = false
+
 [functions.get-mapbox-token]
 verify_jwt = false
 
