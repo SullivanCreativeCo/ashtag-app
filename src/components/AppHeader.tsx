@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut, Shield, ImageIcon } from "lucide-react";
+import { User, LogOut, ImageIcon } from "lucide-react";
+import ashtagLogo from "@/assets/ashtag-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -46,14 +47,13 @@ export function AppHeader() {
       <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
         <button 
           onClick={() => navigate("/feed")}
-          className="flex flex-col items-start"
+          className="flex items-center"
         >
-          <span className="font-display text-2xl font-bold tracking-tight text-foreground">
-            Ash<span className="text-primary relative">Ta<span className="inline-block">g</span></span>
-          </span>
-          <span className="text-[10px] text-muted-foreground italic -mt-1">
-            for the ones worth repeating
-          </span>
+          <img 
+            src={ashtagLogo} 
+            alt="AshTag - For the Ones Worth Repeating" 
+            className="h-10 w-auto"
+          />
         </button>
 
         {user ? (
