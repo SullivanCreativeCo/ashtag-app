@@ -81,7 +81,7 @@ export function BugReportButton() {
         onClick={() => setOpen(true)}
         size="icon"
         variant="outline"
-        className="fixed bottom-24 right-4 z-50 h-12 w-12 rounded-full shadow-lg bg-background border-border hover:bg-muted"
+        className="fixed bottom-48 right-5 z-50 h-11 w-11 rounded-2xl shadow-lg bg-background/90 backdrop-blur-sm border-border hover:bg-muted"
         aria-label="Report a bug"
       >
         <Bug className="h-5 w-5" />
