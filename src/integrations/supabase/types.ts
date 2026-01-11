@@ -363,6 +363,35 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_picks: {
+        Row: {
+          cigar_id: string
+          created_at: string
+          id: string
+          week_start: string
+        }
+        Insert: {
+          cigar_id: string
+          created_at?: string
+          id?: string
+          week_start: string
+        }
+        Update: {
+          cigar_id?: string
+          created_at?: string
+          id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_picks_cigar_id_fkey"
+            columns: ["cigar_id"]
+            isOneToOne: false
+            referencedRelation: "cigars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
