@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { AppHeader } from "./AppHeader";
 import { BottomNav } from "./BottomNav";
+import { BugReportButton } from "./BugReportButton";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -15,6 +16,7 @@ export function AppLayout({ children, showNav = true }: AppLayoutProps) {
         {children}
       </main>
       {showNav && <BottomNav />}
+      <BugReportButton />
     </div>
   );
 }
