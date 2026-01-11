@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const adminEmail = "support@yourapp.com"; // Update this to your support email
+    const adminEmail = "keegan@sullivancreative.co";
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
