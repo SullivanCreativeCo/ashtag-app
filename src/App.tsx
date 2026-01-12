@@ -13,6 +13,8 @@ import MatchCigar from "./pages/MatchCigar";
 import AdminBandImages from "./pages/AdminBandImages";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/admin/band-images" element={<AdminBandImages />} />
             <Route path="/install" element={<Install />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
