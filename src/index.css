@@ -355,6 +355,25 @@
     100% { transform: scale(1); }
   }
 
+  /* Smoke particle animation for likes */
+  @keyframes like-smoke {
+    0% {
+      opacity: 0.7;
+      transform: translateY(0) scale(0.5);
+    }
+    50% {
+      opacity: 0.5;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-24px) scale(1.3);
+    }
+  }
+
+  .animate-like-smoke {
+    animation: like-smoke 0.7s ease-out forwards;
+  }
+
   /* Scrollbar styling - subtle */
   ::-webkit-scrollbar {
     width: 4px;
