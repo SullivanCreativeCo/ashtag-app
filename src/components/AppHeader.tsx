@@ -53,7 +53,7 @@ export function AppHeader() {
           <img 
             src={ashtagLogo} 
             alt="AshTag - For the Ones Worth Repeating" 
-            className="h-28 w-auto"
+            className="h-36 w-auto"
           />
         </button>
 
