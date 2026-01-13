@@ -290,7 +290,7 @@ export default function Rate() {
       burn,
       notes,
       photo_url: photoUrl,
-      overall_score: Number(overallScore),
+      // overall_score is a generated column - computed automatically by the database
     };
 
     const { data: inserted, error } = await supabase
