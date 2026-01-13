@@ -618,27 +618,34 @@ export default function Rate() {
               />
             </div>
 
-            {/* Done Button */}
-            <Button
-              onClick={handleSubmit}
-              disabled={saving || uploadingPhoto}
-              size="lg"
-              className="w-full bg-gradient-ember py-7 text-lg font-bold shadow-ember touch-manipulation"
-            >
-              {(saving || uploadingPhoto) ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : null}
-              {uploadingPhoto ? "Uploading Photo..." : saving ? "Saving..." : "Done"}
-            </Button>
+            {/* Spacer for sticky button */}
+            <div className="h-24" />
           </div>
         )}
       </div>
+
+      {/* Sticky Done Button - always visible when on log step */}
+      {step === "log" && selectedCigar && (
+        <div className="fixed bottom-20 left-0 right-0 z-40 p-4 bg-gradient-to-t from-background via-background to-transparent pt-8">
+          <Button
+            onClick={handleSubmit}
+            disabled={saving || uploadingPhoto}
+            size="lg"
+            className="w-full bg-gradient-ember py-7 text-lg font-bold shadow-ember touch-manipulation"
+          >
+            {(saving || uploadingPhoto) ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : null}
+            {uploadingPhoto ? "Uploading Photo..." : saving ? "Saving..." : "Done"}
+          </Button>
+        </div>
+      )}
 
       {/* Floating camera button - mobile pattern */}
       {step === "log" && !photoPreview && (
         <button
           onClick={() => setShowCamera(true)}
-          className="fixed bottom-24 right-4 z-50 h-14 w-14 rounded-full bg-gradient-ember shadow-ember flex items-center justify-center hover:scale-105 transition-transform active:scale-95"
+          className="fixed bottom-36 right-4 z-50 h-14 w-14 rounded-full bg-gradient-ember shadow-ember flex items-center justify-center hover:scale-105 transition-transform active:scale-95 touch-manipulation"
         >
           <Camera className="h-6 w-6 text-white" />
         </button>
