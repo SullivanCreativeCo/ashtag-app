@@ -227,10 +227,30 @@ export default function AdminBandImages() {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !selectedCigarId || !user) {
+    console.log("handleUpload called", { selectedFile, selectedCigarId, user: !!user });
+    
+    if (!selectedFile) {
       toast({
-        title: "Missing information",
-        description: "Please select a cigar and an image",
+        title: "Missing image",
+        description: "Please select an image to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!selectedCigarId) {
+      toast({
+        title: "Missing cigar",
+        description: "Please select a cigar from the search",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!user) {
+      toast({
+        title: "Not authenticated",
+        description: "Please sign in to upload images",
         variant: "destructive",
       });
       return;
