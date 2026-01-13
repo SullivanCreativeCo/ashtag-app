@@ -48,8 +48,8 @@ export function StickPickOfWeek() {
 
   if (loading) {
     return (
-      <div className="mx-2 mb-6">
-        <div className="card-elevated p-5 skeleton-shimmer h-48 rounded-2xl" />
+      <div className="mx-3 mb-6">
+        <div className="card-cinematic skeleton-shimmer h-[420px] rounded-2xl" />
       </div>
     );
   }
@@ -64,72 +64,65 @@ export function StickPickOfWeek() {
     "Full": "text-red-400",
   };
 
-  // Use band image if available, otherwise fall back to hero image
   const heroImage = bandImageUrl || stickPickHero;
 
   return (
-    <div className="mx-2 mb-6 stagger-item">
-      <div className="card-elevated overflow-hidden">
-        {/* Hero image */}
-        <div className="relative h-44 w-full overflow-hidden">
+    <div className="mx-3 mb-6 stagger-item">
+      <div className="card-cinematic overflow-hidden">
+        {/* Cinematic hero image */}
+        <div className="relative h-56 w-full overflow-hidden hero-image">
           <img 
             src={heroImage} 
             alt={`${cigar.brand} ${cigar.line}`} 
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+          <div className="hero-overlay" />
           
-          {/* Floating smoke wisps */}
-          <div className="absolute bottom-8 right-16 w-8 h-8 rounded-full bg-gradient-to-t from-muted/30 to-transparent blur-sm animate-smoke-drift" style={{ animationDelay: '0s' }} />
-          <div className="absolute bottom-6 right-24 w-6 h-6 rounded-full bg-gradient-to-t from-muted/25 to-transparent blur-sm animate-smoke-drift-alt" style={{ animationDelay: '1s' }} />
-          <div className="absolute bottom-10 right-20 w-10 h-10 rounded-full bg-gradient-to-t from-muted/20 to-transparent blur-md animate-smoke-drift" style={{ animationDelay: '2s' }} />
-          <div className="absolute bottom-4 right-12 w-5 h-5 rounded-full bg-gradient-to-t from-muted/35 to-transparent blur-sm animate-smoke-drift-alt" style={{ animationDelay: '0.5s' }} />
-          <div className="absolute bottom-12 right-28 w-7 h-7 rounded-full bg-gradient-to-t from-muted/15 to-transparent blur-md animate-smoke-drift" style={{ animationDelay: '3s' }} />
+          {/* Smoke wisps */}
+          <div className="absolute bottom-12 right-20 w-10 h-10 rounded-full bg-gradient-to-t from-smoke/20 to-transparent blur-md animate-smoke-drift" style={{ animationDelay: '0s' }} />
+          <div className="absolute bottom-8 right-28 w-8 h-8 rounded-full bg-gradient-to-t from-smoke/15 to-transparent blur-sm animate-smoke-drift-alt" style={{ animationDelay: '1.5s' }} />
+          <div className="absolute bottom-16 right-24 w-12 h-12 rounded-full bg-gradient-to-t from-smoke/10 to-transparent blur-lg animate-smoke-drift" style={{ animationDelay: '3s' }} />
           
-          {/* Badge overlay */}
-          <div className="absolute top-3 left-3 flex items-center gap-2 glass rounded-full px-3 py-1.5">
-            <div className="relative">
-              <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-            </div>
-            <span className="text-xs font-bold text-primary tracking-wide uppercase">
-              Pick of the Week
-            </span>
+          {/* Gold badge */}
+          <div className="absolute top-4 left-4 badge-gold">
+            <Sparkles className="h-3.5 w-3.5 animate-pulse-subtle" />
+            <span>Pick of the Week</span>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-5 space-y-4">
-          {/* Cigar name */}
+        <div className="p-6 space-y-5 -mt-8 relative">
+          {/* Cigar name - large & elegant */}
           <div>
-            <h3 className="font-display text-2xl font-bold text-foreground leading-tight tracking-tight">
+            <h3 className="font-display text-3xl font-bold text-foreground leading-tight tracking-tight">
               {cigar.brand}
             </h3>
-            <p className="text-lg text-primary font-semibold mt-0.5">{cigar.line}</p>
-            <p className="text-sm text-muted-foreground mt-1">{cigar.vitola}</p>
+            <p className="text-xl text-primary font-display font-semibold mt-1">{cigar.line}</p>
+            <p className="text-sm text-muted-foreground font-body mt-1">{cigar.vitola}</p>
           </div>
 
-          {/* Details grid */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Details grid - muted, refined */}
+          <div className="grid grid-cols-2 gap-4">
             {cigar.origin && (
-              <div className="flex items-center gap-2 text-sm">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/40">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Origin</p>
-                  <p className="text-foreground font-medium">{cigar.origin}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body">Origin</p>
+                  <p className="text-sm text-foreground font-medium font-body">{cigar.origin}</p>
                 </div>
               </div>
             )}
 
             {cigar.strength_profile && (
-              <div className="flex items-center gap-2 text-sm">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/40">
                   <Flame className={cn("h-4 w-4", strengthColors[cigar.strength_profile] || "text-muted-foreground")} />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Strength</p>
-                  <p className={cn("font-medium", strengthColors[cigar.strength_profile] || "text-foreground")}>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body">Strength</p>
+                  <p className={cn("text-sm font-medium font-body", strengthColors[cigar.strength_profile] || "text-foreground")}>
                     {cigar.strength_profile}
                   </p>
                 </div>
@@ -137,50 +130,34 @@ export function StickPickOfWeek() {
             )}
 
             {cigar.wrapper && (
-              <div className="flex items-center gap-2 text-sm">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/40">
                   <Leaf className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Wrapper</p>
-                  <p className="text-foreground font-medium truncate max-w-[120px]">{cigar.wrapper}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body">Wrapper</p>
+                  <p className="text-sm text-foreground font-medium truncate max-w-[100px] font-body">{cigar.wrapper}</p>
                 </div>
               </div>
             )}
 
             {cigar.size && (
-              <div className="flex items-center gap-2 text-sm">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/50">
-                  <span className="text-xs font-bold text-muted-foreground">Size</span>
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/40">
+                  <span className="text-[10px] font-bold text-muted-foreground font-body">Size</span>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Dimensions</p>
-                  <p className="text-foreground font-medium">{cigar.size}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-body">Dimensions</p>
+                  <p className="text-sm text-foreground font-medium font-body">{cigar.size}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Tobacco details */}
-          {(cigar.binder || cigar.filler) && (
-            <div className="pt-3 border-t border-border/30 space-y-2">
-              {cigar.binder && (
-                <p className="text-xs text-muted-foreground">
-                  <span className="text-foreground/70">Binder:</span> {cigar.binder}
-                </p>
-              )}
-              {cigar.filler && (
-                <p className="text-xs text-muted-foreground">
-                  <span className="text-foreground/70">Filler:</span> {cigar.filler}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* CTA */}
+          {/* CTA Button - glowing gold */}
           <button 
             onClick={() => navigate(`/rate?cigarId=${cigar.id}`)}
-            className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 text-primary font-semibold text-sm transition-all duration-300 hover:from-primary/30 hover:to-primary/20 active:scale-[0.98]"
+            className="w-full py-3.5 rounded-xl btn-glow text-primary-foreground font-display font-semibold text-sm tracking-wide"
           >
             Rate This Cigar
           </button>

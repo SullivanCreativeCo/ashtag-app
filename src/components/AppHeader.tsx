@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut, ImageIcon } from "lucide-react";
-import ashtagLogo from "@/assets/ashtag-logo.png";
+import ashtagLogo from "@/assets/ashtag-logo-gold.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -43,45 +43,50 @@ export function AppHeader() {
   };
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 glass safe-top">
-      <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
+    <header className="fixed left-0 right-0 top-0 z-50 glass-nav safe-top">
+      <div className="mx-auto flex h-16 max-w-lg items-center justify-between px-5">
+        {/* Logo */}
         <button 
           onClick={() => navigate("/feed")}
           className="flex items-center"
         >
           <img 
             src={ashtagLogo} 
-            alt="AshTag - For the Ones Worth Repeating" 
-            className="h-40 w-auto"
+            alt="AshTag" 
+            className="h-10 w-auto"
           />
         </button>
 
+        {/* Profile / Auth */}
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-full outline-none ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                <Avatar className="h-8 w-8 ring-2 ring-border/50">
+              <button className="flex items-center outline-none transition-all duration-200 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-full">
+                <Avatar className="h-9 w-9 ring-2 ring-primary/40">
                   <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary">
+                  <AvatarFallback className="bg-charcoal-light text-primary">
                     <User className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 glass">
+            <DropdownMenuContent align="end" className="w-48 card-glass border-border/50">
               {isAdmin && (
                 <>
                   <DropdownMenuItem 
                     onClick={() => navigate("/admin/band-images")}
-                    className="gap-2"
+                    className="gap-2 cursor-pointer"
                   >
                     <ImageIcon className="h-4 w-4" />
                     Band Images
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-border/50" />
                 </>
               )}
-              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive gap-2">
+              <DropdownMenuItem 
+                onClick={handleSignOut} 
+                className="text-destructive focus:text-destructive gap-2 cursor-pointer"
+              >
                 <LogOut className="h-4 w-4" />
                 Sign out
               </DropdownMenuItem>
@@ -90,7 +95,7 @@ export function AppHeader() {
         ) : (
           <button
             onClick={() => navigate("/auth")}
-            className="rounded-lg bg-primary px-4 py-2 font-display text-sm text-primary-foreground transition-colors hover:bg-primary/90"
+            className="btn-glow rounded-lg px-5 py-2 font-display text-sm font-semibold text-primary-foreground"
           >
             Sign in
           </button>

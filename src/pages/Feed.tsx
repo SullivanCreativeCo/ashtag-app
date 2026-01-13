@@ -9,8 +9,8 @@ import { StickPickOfWeek } from "@/components/StickPickOfWeek";
 import { CameraCapture } from "@/components/CameraCapture";
 import { FriendRequestBadge } from "@/components/FriendRequestBadge";
 import { FriendRequestsSheet } from "@/components/FriendRequestsSheet";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SmokeLogWithDetails {
   id: string;
@@ -40,6 +40,8 @@ interface SmokeLogWithDetails {
   user_has_liked: boolean;
 }
 
+type FeedFilter = "all" | "friends";
+
 export default function Feed() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -47,20 +49,18 @@ export default function Feed() {
   const [logs, setLogs] = useState<SmokeLogWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [feedFilter, setFeedFilter] = useState<"all" | "friends">("all");
+  const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
 
   useEffect(() => {
     fetchLogs();
   }, [user]);
 
   const handleCameraCapture = (imageData: string) => {
-    // Navigate to match page with the captured image
     navigate("/match-cigar", { state: { capturedImage: imageData } });
   };
 
   const fetchLogs = async () => {
     try {
-      // Fetch smoke logs with cigar info
       const { data: logsData, error: logsError } = await supabase
         .from("smoke_logs")
         .select(`
@@ -72,7 +72,6 @@ export default function Feed() {
 
       if (logsError) throw logsError;
 
-      // Fetch profiles, likes and comments counts
       const logsWithCounts = await Promise.all(
         (logsData || []).map(async (log) => {
           const [profileResult, likesResult, commentsResult, userLikeResult] = await Promise.all([
@@ -133,7 +132,6 @@ export default function Feed() {
         .insert({ smoke_log_id: logId, user_id: user.id });
     }
 
-    // Refresh the specific log
     setLogs((prev) =>
       prev.map((log) =>
         log.id === logId
@@ -149,16 +147,22 @@ export default function Feed() {
     );
   };
 
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 
+                    user?.user_metadata?.name?.split(' ')[0] || 
+                    'Friend';
+
   return (
     <AppLayout>
-      <div className="space-y-5 pb-24">
-        {/* Sticky header */}
-        <div className="sticky top-0 z-40 -mx-1 px-4 py-4 header-blur">
+      <div className="space-y-6 pb-24">
+        {/* Header section */}
+        <div className="sticky top-0 z-40 -mx-1 px-5 py-5 header-blur">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Welcome back</p>
-              <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">
-                Hello, {user?.user_metadata?.full_name?.split(' ')[0] || user?.user_metadata?.name?.split(' ')[0] || 'Friend'} 👋
+              <p className="text-xs font-body text-muted-foreground uppercase tracking-widest mb-1">
+                Welcome back
+              </p>
+              <h1 className="font-display text-3xl font-semibold text-foreground">
+                Hello, {firstName}
               </h1>
             </div>
             {pendingRequests.length > 0 && (
@@ -168,15 +172,36 @@ export default function Feed() {
             )}
           </div>
 
-          {/* Feed filter tabs */}
+          {/* Premium pill toggle */}
           {user && (
-            <div className="mt-4">
-              <Tabs value={feedFilter} onValueChange={(v) => setFeedFilter(v as "all" | "friends")}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="all">Everyone</TabsTrigger>
-                  <TabsTrigger value="friends">Friends</TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <div className="mt-5 flex justify-center">
+              <div className="pill-toggle">
+                <div 
+                  className="pill-toggle-indicator"
+                  style={{
+                    left: feedFilter === "all" ? "4px" : "calc(50%)",
+                    width: "calc(50% - 4px)"
+                  }}
+                />
+                <button
+                  onClick={() => setFeedFilter("all")}
+                  className={cn(
+                    "pill-toggle-item",
+                    feedFilter === "all" && "active"
+                  )}
+                >
+                  Everyone
+                </button>
+                <button
+                  onClick={() => setFeedFilter("friends")}
+                  className={cn(
+                    "pill-toggle-item",
+                    feedFilter === "friends" && "active"
+                  )}
+                >
+                  Friends
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -184,14 +209,14 @@ export default function Feed() {
         {/* Stick Pick of the Week - only on Everyone tab */}
         {feedFilter === "all" && <StickPickOfWeek />}
 
-        <div className="px-2">
+        <div className="px-3">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <div className="relative">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <div className="absolute inset-0 h-10 w-10 animate-ping opacity-20 rounded-full bg-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <div className="absolute inset-0 h-8 w-8 animate-ping opacity-15 rounded-full bg-primary" />
               </div>
-              <p className="text-sm text-muted-foreground animate-pulse">Loading the latest smokes...</p>
+              <p className="text-sm text-muted-foreground font-body">Loading the latest smokes...</p>
             </div>
           ) : (() => {
             const friendIds = getFriendIds();
@@ -201,10 +226,10 @@ export default function Feed() {
 
             if (filteredLogs.length === 0) {
               return (
-                <div className="card-elevated flex flex-col items-center justify-center py-20 text-center">
-                  <div className="mb-5 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 p-6">
+                <div className="card-glass flex flex-col items-center justify-center py-16 text-center px-6">
+                  <div className="mb-5 rounded-2xl bg-charcoal-light p-5">
                     <svg
-                      className="h-12 w-12 text-primary animate-glow"
+                      className="h-10 w-10 text-primary animate-pulse-subtle"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -217,20 +242,20 @@ export default function Feed() {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-display font-bold text-foreground">
+                  <h3 className="text-xl font-display font-semibold text-foreground">
                     {feedFilter === "friends" ? "No friend posts yet" : "No smoke logs yet"}
                   </h3>
-                  <p className="mt-2 text-sm text-muted-foreground max-w-[240px]">
+                  <p className="mt-2 text-sm text-muted-foreground font-body max-w-[260px]">
                     {feedFilter === "friends" 
-                      ? "Add some friends to see their smoke logs here!"
-                      : "Be the first to share your cigar experience with the community!"}
+                      ? "Add some friends to see their smoke logs here"
+                      : "Be the first to share your cigar experience with the community"}
                   </p>
                 </div>
               );
             }
 
             return (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {filteredLogs.map((log) => (
                   <SmokeLogCard
                     key={log.id}
@@ -250,7 +275,7 @@ export default function Feed() {
         className="fab animate-float"
         aria-label="Add smoke log"
       >
-        <Plus className="h-7 w-7 text-white drop-shadow-lg" />
+        <Plus className="h-6 w-6 text-primary-foreground drop-shadow-sm" />
       </button>
 
       {/* Camera Capture Modal */}
