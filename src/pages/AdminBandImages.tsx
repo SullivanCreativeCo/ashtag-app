@@ -554,11 +554,23 @@ export default function AdminBandImages() {
                       </Label>
                     </div>
 
+                    {/* Status indicator */}
+                    {(!selectedCigarId || !selectedFile) && (
+                      <div className="text-sm text-amber-500 bg-amber-500/10 rounded-lg p-3 space-y-1">
+                        <p className="font-medium">Before uploading:</p>
+                        <ul className="list-disc list-inside text-xs space-y-0.5">
+                          {!selectedCigarId && <li>Select a cigar from the search above</li>}
+                          {!selectedFile && <li>Choose an image file to upload</li>}
+                        </ul>
+                      </div>
+                    )}
+
                     {/* Submit */}
                     <Button
                       onClick={handleUpload}
                       disabled={!selectedCigarId || !selectedFile || uploading}
                       className="w-full"
+                      size="lg"
                     >
                       {uploading ? (
                         <>
