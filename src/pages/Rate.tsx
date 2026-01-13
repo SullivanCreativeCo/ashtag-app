@@ -625,13 +625,13 @@ export default function Rate() {
       </div>
 
       {/* Sticky Done Button - always visible when on log step */}
-      {step === "log" && selectedCigar && (
+      {step === "log" && (
         <div className="fixed bottom-0 left-0 right-0 z-[60] p-4 pb-24 bg-gradient-to-t from-background via-background/95 to-transparent safe-bottom">
           <Button
             onClick={handleSubmit}
-            disabled={saving || uploadingPhoto}
+            disabled={saving || uploadingPhoto || !selectedCigar}
             size="lg"
-            className="w-full bg-gradient-ember py-6 text-lg font-bold shadow-ember touch-manipulation"
+            className="w-full bg-gradient-ember py-6 text-lg font-bold shadow-ember touch-manipulation disabled:opacity-50"
           >
             {(saving || uploadingPhoto) ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
