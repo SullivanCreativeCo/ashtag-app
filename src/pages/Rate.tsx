@@ -626,12 +626,12 @@ export default function Rate() {
 
       {/* Sticky Done Button - always visible when on log step */}
       {step === "log" && selectedCigar && (
-        <div className="fixed bottom-20 left-0 right-0 z-40 p-4 bg-gradient-to-t from-background via-background to-transparent pt-8">
+        <div className="fixed bottom-0 left-0 right-0 z-[60] p-4 pb-24 bg-gradient-to-t from-background via-background/95 to-transparent safe-bottom">
           <Button
             onClick={handleSubmit}
             disabled={saving || uploadingPhoto}
             size="lg"
-            className="w-full bg-gradient-ember py-7 text-lg font-bold shadow-ember touch-manipulation"
+            className="w-full bg-gradient-ember py-6 text-lg font-bold shadow-ember touch-manipulation"
           >
             {(saving || uploadingPhoto) ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -645,7 +645,7 @@ export default function Rate() {
       {step === "log" && !photoPreview && (
         <button
           onClick={() => setShowCamera(true)}
-          className="fixed bottom-36 right-4 z-50 h-14 w-14 rounded-full bg-gradient-ember shadow-ember flex items-center justify-center hover:scale-105 transition-transform active:scale-95 touch-manipulation"
+          className="fixed bottom-44 right-4 z-[61] h-14 w-14 rounded-full bg-gradient-ember shadow-ember flex items-center justify-center hover:scale-105 transition-transform active:scale-95 touch-manipulation"
         >
           <Camera className="h-6 w-6 text-white" />
         </button>
