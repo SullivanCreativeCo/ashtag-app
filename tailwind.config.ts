@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Limelight", "cursive"],
-        body: ["Old Standard TT", "serif"],
+        display: ["Cormorant Garamond", "Georgia", "serif"],
+        body: ["Inter", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -56,18 +56,22 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Ash Tag custom colors
-        ember: {
-          DEFAULT: "hsl(var(--ember))",
-          glow: "hsl(var(--ember-glow))",
-          dark: "hsl(var(--ember-dark))",
+        // Premium cigar lounge colors
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          light: "hsl(var(--gold-light))",
+          dark: "hsl(var(--gold-dark))",
         },
-        ash: "hsl(var(--ash))",
-        smoke: "hsl(var(--smoke))",
         charcoal: {
           DEFAULT: "hsl(var(--charcoal))",
+          deep: "hsl(var(--charcoal-deep))",
           light: "hsl(var(--charcoal-light))",
         },
+        espresso: "hsl(var(--espresso))",
+        leather: "hsl(var(--leather))",
+        walnut: "hsl(var(--walnut))",
+        smoke: "hsl(var(--smoke))",
+        ash: "hsl(var(--ash))",
         match: {
           active: "hsl(var(--match-active))",
           inactive: "hsl(var(--match-inactive))",
@@ -79,8 +83,10 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        ember: "var(--shadow-ember)",
+        gold: "var(--shadow-gold)",
+        glow: "var(--shadow-glow)",
         card: "var(--shadow-card)",
+        float: "var(--shadow-float)",
       },
       keyframes: {
         "accordion-down": {
@@ -109,10 +115,10 @@ export default {
             transform: "translateY(0) translateX(0) scale(1)" 
           },
           "20%": { 
-            opacity: "0.4" 
+            opacity: "0.3" 
           },
           "80%": { 
-            opacity: "0.2" 
+            opacity: "0.15" 
           },
           "100%": { 
             opacity: "0", 
@@ -125,28 +131,19 @@ export default {
             transform: "translateY(0) translateX(0) scale(1)" 
           },
           "25%": { 
-            opacity: "0.3" 
+            opacity: "0.25" 
           },
           "75%": { 
-            opacity: "0.15" 
+            opacity: "0.1" 
           },
           "100%": { 
             opacity: "0", 
             transform: "translateY(-50px) translateX(-15px) scale(1.3)" 
           },
         },
-        "like-smoke": {
-          "0%": {
-            opacity: "0.6",
-            transform: "translateY(0) scale(0.5)",
-          },
-          "50%": {
-            opacity: "0.4",
-          },
-          "100%": {
-            opacity: "0",
-            transform: "translateY(-30px) scale(1.2)",
-          },
+        "pulse-subtle": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
         },
       },
       animation: {
@@ -155,9 +152,9 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         shimmer: "shimmer 2s linear infinite",
-        "smoke-drift": "smoke-drift 4s ease-out infinite",
-        "smoke-drift-alt": "smoke-drift-alt 5s ease-out infinite",
-        "like-smoke": "like-smoke 0.8s ease-out forwards",
+        "smoke-drift": "smoke-drift 5s ease-out infinite",
+        "smoke-drift-alt": "smoke-drift-alt 6s ease-out infinite",
+        "pulse-subtle": "pulse-subtle 3s ease-in-out infinite",
       },
     },
   },

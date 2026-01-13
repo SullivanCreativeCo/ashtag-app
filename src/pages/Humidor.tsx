@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { LitMatchDisplay } from "@/components/LitMatchRating";
-import { Button } from "@/components/ui/button";
 import { Plus, Heart, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -42,7 +41,6 @@ export default function Humidor() {
     if (!user) return;
 
     try {
-      // Get all smoke logs for this user with cigar info
       const { data: logs, error: logsError } = await supabase
         .from("smoke_logs")
         .select(`
@@ -56,7 +54,6 @@ export default function Humidor() {
 
       if (logsError) throw logsError;
 
-      // Get user favorites
       const { data: favorites, error: favError } = await supabase
         .from("user_favorites")
         .select("cigar_id")
@@ -66,7 +63,6 @@ export default function Humidor() {
 
       const favoriteIds = new Set(favorites?.map((f) => f.cigar_id) || []);
 
-      // Group by cigar
       const cigarMap = new Map<string, HumidorCigar>();
       
       (logs || []).forEach((log) => {
@@ -128,65 +124,81 @@ export default function Humidor() {
 
   return (
     <AppLayout>
-      <div className="py-4 space-y-4">
-        <h1 className="font-display text-2xl font-bold text-foreground">
+      <div className="py-5 space-y-5 px-1">
+        <h1 className="font-display text-3xl font-semibold text-foreground px-2">
           My Humidor
         </h1>
 
-        {/* Filter tabs */}
-        <div className="flex gap-2">
-          {(["all", "favorites"] as const).map((f) => (
+        {/* Premium pill toggle */}
+        <div className="flex justify-start px-2">
+          <div className="pill-toggle">
+            <div 
+              className="pill-toggle-indicator"
+              style={{
+                left: filter === "all" ? "4px" : "calc(50%)",
+                width: "calc(50% - 4px)"
+              }}
+            />
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              onClick={() => setFilter("all")}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                filter === f
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-muted-foreground hover:text-foreground"
+                "pill-toggle-item",
+                filter === "all" && "active"
               )}
             >
-              {f === "all" ? "All" : "Favorites"}
+              All
             </button>
-          ))}
+            <button
+              onClick={() => setFilter("favorites")}
+              className={cn(
+                "pill-toggle-item",
+                filter === "favorites" && "active"
+              )}
+            >
+              Favorites
+            </button>
+          </div>
         </div>
 
         {/* Cigars list */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : filteredCigars.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 rounded-full bg-card p-6">
-              <Heart className="h-12 w-12 text-muted-foreground" />
+          <div className="card-glass flex flex-col items-center justify-center py-16 text-center mx-2">
+            <div className="mb-4 rounded-full bg-charcoal-light p-5">
+              <Heart className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground">
+            <h3 className="text-xl font-display font-semibold text-foreground">
               {filter === "favorites" ? "No favorites yet" : "Your humidor is empty"}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-2 text-sm text-muted-foreground font-body max-w-[260px]">
               {filter === "favorites"
                 ? "Tap the heart on any cigar to add it here"
                 : "Start logging cigars to build your collection"}
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {filteredCigars.map((cigar) => (
+          <div className="space-y-3 px-2">
+            {filteredCigars.map((cigar, index) => (
               <div
                 key={cigar.cigar_id}
-                className="rounded-xl border border-border bg-card p-4 animate-fade-in"
+                className="card-glass p-4 stagger-item"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-display text-lg font-semibold text-foreground">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display text-xl font-semibold text-foreground leading-tight">
                       {cigar.brand} {cigar.line}
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-2">
+                    <p className="text-sm text-muted-foreground font-body mt-0.5">
                       {cigar.vitola}
                     </p>
-                    <LitMatchDisplay score={cigar.avg_score} size="sm" />
-                    <p className="mt-2 text-xs text-muted-foreground">
+                    <div className="mt-3">
+                      <LitMatchDisplay score={cigar.avg_score} size="sm" />
+                    </div>
+                    <p className="mt-3 text-xs text-muted-foreground font-body">
                       {cigar.logs_count} log{cigar.logs_count !== 1 ? "s" : ""} •
                       Last smoked{" "}
                       {formatDistanceToNow(new Date(cigar.last_smoked), {
@@ -197,9 +209,9 @@ export default function Humidor() {
                   <button
                     onClick={() => toggleFavorite(cigar.cigar_id, cigar.is_favorite)}
                     className={cn(
-                      "rounded-full p-2 transition-colors",
+                      "rounded-full p-2 transition-all duration-300 like-button",
                       cigar.is_favorite
-                        ? "text-primary"
+                        ? "text-primary liked"
                         : "text-muted-foreground hover:text-primary"
                     )}
                   >

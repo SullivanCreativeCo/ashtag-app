@@ -30,8 +30,8 @@ export function BottomNav() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass safe-bottom">
-      <div className="mx-auto flex max-w-lg items-stretch justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav safe-bottom">
+      <div className="mx-auto flex max-w-lg items-stretch justify-around py-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -46,20 +46,20 @@ export function BottomNav() {
               )}
             >
               <div className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-300",
-                isActive ? "bg-primary/15 scale-110" : "hover:bg-muted/50"
+                "flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300",
+                isActive ? "scale-110" : "hover:bg-muted/30"
               )}>
                 <Icon
                   className={cn(
-                    "h-6 w-6 transition-all duration-300",
+                    "h-5 w-5 transition-all duration-300",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
-                  strokeWidth={isActive ? 2.5 : 2}
+                  strokeWidth={isActive ? 2.5 : 1.5}
                 />
               </div>
               <span
                 className={cn(
-                  "text-[11px] font-semibold tracking-wide transition-all duration-300 mt-0.5",
+                  "text-[10px] font-display font-semibold tracking-wider uppercase transition-all duration-300",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
               >
