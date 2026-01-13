@@ -618,16 +618,17 @@ export default function Rate() {
               />
             </div>
 
-            {/* Submit */}
+            {/* Done Button */}
             <Button
               onClick={handleSubmit}
               disabled={saving || uploadingPhoto}
-              className="w-full bg-gradient-ember py-6 font-semibold shadow-ember"
+              size="lg"
+              className="w-full bg-gradient-ember py-7 text-lg font-bold shadow-ember touch-manipulation"
             >
               {(saving || uploadingPhoto) ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               ) : null}
-              {uploadingPhoto ? "Uploading Photo..." : "Rate This Cigar"}
+              {uploadingPhoto ? "Uploading Photo..." : saving ? "Saving..." : "Done"}
             </Button>
           </div>
         )}
