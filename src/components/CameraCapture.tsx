@@ -119,6 +119,7 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
   };
 
   const handleConfirm = () => {
+    console.log("handleConfirm called, capturedImage:", !!capturedImage);
     if (capturedImage) {
       // Parent should close the modal by updating isOpen after receiving the capture.
       // This avoids accidental navigation when onClose is wired to "go back".
@@ -234,15 +235,25 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
         <div className="absolute bottom-0 left-0 right-0 p-6 safe-bottom">
           <div className="flex items-center justify-center gap-8">
             <button
+              type="button"
               onClick={handleRetake}
-              className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform active:scale-95"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleRetake();
+              }}
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform active:scale-95 touch-manipulation"
             >
               <RotateCcw className="h-6 w-6 text-white" />
             </button>
             
             <button
+              type="button"
               onClick={handleConfirm}
-              className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-ember shadow-ember transition-transform active:scale-95"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleConfirm();
+              }}
+              className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-ember shadow-ember transition-transform active:scale-95 touch-manipulation"
             >
               <Check className="h-8 w-8 text-white" />
             </button>
