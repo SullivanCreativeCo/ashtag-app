@@ -233,7 +233,24 @@ export default function Rate() {
   };
 
   const handleSubmit = async () => {
-    if (!user || !selectedCigar) return;
+    if (!selectedCigar) {
+      toast({
+        title: "Select a cigar",
+        description: "Please choose a cigar before saving a rating.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to save your rating.",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
 
     setSaving(true);
     let photoUrl: string | null = null;
@@ -241,29 +258,30 @@ export default function Rate() {
     // Upload photo if selected
     if (photoFile) {
       setUploadingPhoto(true);
-      const fileExt = photoFile.name.split('.').pop();
+      const fileExt = photoFile.name.split('.').pop() || "jpg";
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
+
+      const { error: uploadError } = await supabase.storage
         .from("smoke-log-photos")
         .upload(fileName, photoFile);
 
       if (uploadError) {
+        console.error("Photo upload error:", uploadError);
         toast({
           title: "Photo upload failed",
-          description: "Your rating will be saved without the photo",
+          description: "Your rating will be saved without the photo.",
           variant: "destructive",
         });
       } else {
-        const { data: { publicUrl } } = supabase.storage
-          .from("smoke-log-photos")
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("smoke-log-photos").getPublicUrl(fileName);
         photoUrl = publicUrl;
       }
       setUploadingPhoto(false);
     }
 
-    const { error } = await supabase.from("smoke_logs").insert({
+    const payload = {
       user_id: user.id,
       cigar_id: selectedCigar.id,
       construction,
@@ -272,21 +290,30 @@ export default function Rate() {
       burn,
       notes,
       photo_url: photoUrl,
-    });
+      overall_score: Number(overallScore),
+    };
+
+    const { data: inserted, error } = await supabase
+      .from("smoke_logs")
+      .insert(payload)
+      .select("id")
+      .single();
 
     if (error) {
+      console.error("Smoke log insert error:", error, payload);
       toast({
         title: "Error",
-        description: "Failed to save your smoke log",
+        description: error.message || "Failed to save your smoke log",
         variant: "destructive",
       });
     } else {
       toast({
         title: "Logged!",
-        description: "Your smoke log has been saved",
+        description: "Your smoke log has been saved.",
       });
-      navigate("/feed");
+      navigate("/feed", { state: { highlightLogId: inserted?.id } });
     }
+
     setSaving(false);
   };
 

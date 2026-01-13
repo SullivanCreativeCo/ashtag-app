@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFriendships } from "@/hooks/useFriendships";
@@ -44,6 +44,7 @@ type FeedFilter = "all" | "friends";
 
 export default function Feed() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { pendingRequests, getFriendIds } = useFriendships();
   const [logs, setLogs] = useState<SmokeLogWithDetails[]>([]);
@@ -53,7 +54,8 @@ export default function Feed() {
 
   useEffect(() => {
     fetchLogs();
-  }, [user]);
+    // Re-run when navigating back to /feed (e.g. after saving a rating)
+  }, [user, location.key]);
 
   const handleCameraCapture = (imageData: string) => {
     navigate("/match-cigar", { state: { capturedImage: imageData } });
