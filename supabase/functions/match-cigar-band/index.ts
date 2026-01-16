@@ -174,6 +174,8 @@ CONFIDENCE SCORING:
 - 50-69%: Brand match but unclear line or shape
 - Below 50%: Uncertain match
 
+IMPORTANT: If no good match is found (confidence below 50%), set "suggestAddToDatabase" to true and provide your best guess for the cigar info based on what you can read on the band.
+
 Always return your top 3 best matches from the database, even if confidence is low.
 
 Respond ONLY with valid JSON in this exact format:
@@ -184,7 +186,17 @@ Respond ONLY with valid JSON in this exact format:
     "brand": "extracted brand name or null",
     "line": "extracted line name or null",
     "shape": "detected shape (torpedo, robusto, toro, etc.) or null",
+    "wrapper": "detected wrapper type (maduro, connecticut, habano, etc.) or null",
+    "origin": "detected origin country or null",
     "otherText": "any other visible text"
+  },
+  "suggestAddToDatabase": true/false,
+  "suggestedCigar": {
+    "brand": "best guess brand name",
+    "line": "best guess line name",
+    "vitola": "detected vitola/shape",
+    "wrapper": "detected wrapper or null",
+    "origin": "detected origin or null"
   },
   "matches": [
     {

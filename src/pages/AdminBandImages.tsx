@@ -17,6 +17,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ArrowLeft,
   Upload,
   Search,
@@ -29,6 +36,8 @@ import {
   X,
   Clock,
   MessageSquare,
+  Globe,
+  Cigarette,
 } from "lucide-react";
 
 interface Cigar {
@@ -58,6 +67,38 @@ interface CigarRequest {
   display_name?: string | null;
 }
 
+interface ScrapedCigar {
+  name?: string;
+  brand?: string;
+  line?: string;
+  vitola?: string;
+  origin?: string;
+  ringGauge?: string;
+  length?: string;
+  wrapper?: string;
+  description?: string;
+}
+
+const VITOLA_OPTIONS = [
+  "Robusto", "Toro", "Gordo", "Churchill", "Corona", "Lancero",
+  "Torpedo", "Belicoso", "Perfecto", "Petit Corona", "Double Corona",
+  "Lonsdale", "Panatela", "Rothschild", "Figurado",
+];
+
+const WRAPPER_OPTIONS = [
+  "Natural", "Maduro", "Connecticut", "Habano", "Corojo", "Oscuro",
+  "Candela", "Cameroon", "Sumatra", "Broadleaf",
+];
+
+const ORIGIN_OPTIONS = [
+  "Nicaragua", "Dominican Republic", "Honduras", "Cuba", "Mexico",
+  "Costa Rica", "Ecuador", "United States", "Brazil", "Philippines",
+];
+
+const STRENGTH_OPTIONS = [
+  "Mild", "Mild-Medium", "Medium", "Medium-Full", "Full",
+];
+
 export default function AdminBandImages() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -84,6 +125,25 @@ export default function AdminBandImages() {
   const [description, setDescription] = useState("");
   const [isPrimary, setIsPrimary] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Add cigar form state
+  const [addCigarDialogOpen, setAddCigarDialogOpen] = useState(false);
+  const [addingCigar, setAddingCigar] = useState(false);
+  const [newCigar, setNewCigar] = useState({
+    brand: "",
+    line: "",
+    vitola: "",
+    wrapper: "",
+    origin: "",
+    strength: "",
+    size: "",
+  });
+
+  // Scraper state
+  const [scraping, setScraping] = useState(false);
+  const [scrapeQuery, setScrapeQuery] = useState("");
+  const [scrapedCigars, setScrapedCigars] = useState<ScrapedCigar[]>([]);
+  const [importingIndex, setImportingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -131,7 +191,6 @@ export default function AdminBandImages() {
   const fetchData = async () => {
     setLoading(true);
 
-    // Fetch all cigars
     const { data: cigarsData } = await supabase
       .from("cigars")
       .select("id, brand, line, vitola")
@@ -141,7 +200,6 @@ export default function AdminBandImages() {
       setCigars(cigarsData);
     }
 
-    // Fetch existing band images
     const { data: imagesData } = await supabase
       .from("cigar_band_images")
       .select(`
@@ -164,7 +222,6 @@ export default function AdminBandImages() {
       .order("created_at", { ascending: false });
 
     if (!error && requestsData) {
-      // Fetch profiles for each request
       const userIds = [...new Set(requestsData.map(r => r.user_id))];
       const { data: profilesData } = await supabase
         .from("profiles")
@@ -227,39 +284,11 @@ export default function AdminBandImages() {
   };
 
   const handleUpload = async () => {
-    console.log("handleUpload called", { selectedFile, selectedCigarId, user: !!user });
-    
-    if (!selectedFile) {
-      toast({
-        title: "Missing image",
-        description: "Please select an image to upload",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!selectedCigarId) {
-      toast({
-        title: "Missing cigar",
-        description: "Please select a cigar from the search",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!user) {
-      toast({
-        title: "Not authenticated",
-        description: "Please sign in to upload images",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!selectedFile || !selectedCigarId || !user) return;
 
     setUploading(true);
 
     try {
-      // Upload image to storage
       const fileExt = selectedFile.name.split(".").pop();
       const fileName = `${selectedCigarId}/${Date.now()}.${fileExt}`;
 
@@ -269,12 +298,10 @@ export default function AdminBandImages() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from("cigar-bands")
         .getPublicUrl(fileName);
 
-      // Create database record
       const { error: dbError } = await supabase.from("cigar_band_images").insert({
         cigar_id: selectedCigarId,
         image_url: urlData.publicUrl,
@@ -290,7 +317,6 @@ export default function AdminBandImages() {
         description: "The cigar band image has been added",
       });
 
-      // Reset form and refresh
       resetForm();
       fetchData();
       setDialogOpen(false);
@@ -308,16 +334,13 @@ export default function AdminBandImages() {
 
   const handleDelete = async (imageId: string, imageUrl: string) => {
     try {
-      // Extract file path from URL
       const urlParts = imageUrl.split("/cigar-bands/");
       const filePath = urlParts[1];
 
-      // Delete from storage
       if (filePath) {
         await supabase.storage.from("cigar-bands").remove([filePath]);
       }
 
-      // Delete from database
       const { error } = await supabase
         .from("cigar_band_images")
         .delete()
@@ -350,6 +373,150 @@ export default function AdminBandImages() {
     setSearchQuery("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const handleAddCigar = async () => {
+    if (!newCigar.brand.trim() || !newCigar.line.trim() || !newCigar.vitola.trim()) {
+      toast({
+        title: "Missing fields",
+        description: "Brand, line, and vitola are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingCigar(true);
+
+    try {
+      const { error } = await supabase.from("cigars").insert({
+        brand: newCigar.brand.trim(),
+        line: newCigar.line.trim(),
+        vitola: newCigar.vitola.trim(),
+        wrapper: newCigar.wrapper.trim() || null,
+        origin: newCigar.origin.trim() || null,
+        strength_profile: newCigar.strength || null,
+        size: newCigar.size.trim() || null,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Cigar added!",
+        description: `${newCigar.brand} ${newCigar.line} has been added to the database`,
+      });
+
+      setNewCigar({ brand: "", line: "", vitola: "", wrapper: "", origin: "", strength: "", size: "" });
+      setAddCigarDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error("Error adding cigar:", error);
+      toast({
+        title: "Failed to add cigar",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setAddingCigar(false);
+    }
+  };
+
+  const handleScrape = async () => {
+    if (!scrapeQuery.trim()) {
+      toast({
+        title: "Enter a search term",
+        description: "Please enter a brand or cigar name to search",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setScraping(true);
+    setScrapedCigars([]);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-cigars", {
+        body: { action: "search", searchQuery: scrapeQuery.trim() },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.cigars && data.cigars.length > 0) {
+        setScrapedCigars(data.cigars);
+        toast({
+          title: "Found cigars!",
+          description: `Found ${data.cigars.length} cigars from Elite Cigar Library`,
+        });
+      } else {
+        toast({
+          title: "No results",
+          description: "No cigars found for that search. Try a different term.",
+        });
+      }
+    } catch (error) {
+      console.error("Scrape error:", error);
+      toast({
+        title: "Scraping failed",
+        description: error instanceof Error ? error.message : "Failed to scrape website",
+        variant: "destructive",
+      });
+    } finally {
+      setScraping(false);
+    }
+  };
+
+  const handleImportCigar = async (cigar: ScrapedCigar, index: number) => {
+    setImportingIndex(index);
+
+    try {
+      // Check if cigar already exists
+      const brand = cigar.brand || cigar.name?.split(" ")[0] || "Unknown";
+      const line = cigar.line || cigar.name || "Unknown";
+      const vitola = cigar.vitola || "Robusto";
+
+      const { data: existing } = await supabase
+        .from("cigars")
+        .select("id")
+        .ilike("brand", brand)
+        .ilike("line", line)
+        .ilike("vitola", vitola)
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          title: "Already exists",
+          description: `${brand} ${line} ${vitola} is already in the database`,
+        });
+        return;
+      }
+
+      const { error } = await supabase.from("cigars").insert({
+        brand,
+        line,
+        vitola,
+        wrapper: cigar.wrapper || null,
+        origin: cigar.origin || null,
+        size: cigar.ringGauge ? `${cigar.length || "?"} x ${cigar.ringGauge}` : null,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Cigar imported!",
+        description: `${brand} ${line} has been added to the database`,
+      });
+
+      fetchData();
+    } catch (error) {
+      console.error("Import error:", error);
+      toast({
+        title: "Import failed",
+        description: error instanceof Error ? error.message : "Failed to import cigar",
+        variant: "destructive",
+      });
+    } finally {
+      setImportingIndex(null);
     }
   };
 
@@ -395,28 +562,181 @@ export default function AdminBandImages() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <div>
+          <div className="flex-1">
             <h1 className="font-display text-xl font-bold text-foreground">
               Admin Panel
             </h1>
             <p className="text-xs text-muted-foreground">
-              Manage cigars and requests
+              Manage cigars, images, and requests
             </p>
+          </div>
+          
+          {/* Quick Add Cigar Button */}
+          <Dialog open={addCigarDialogOpen} onOpenChange={setAddCigarDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="gap-2">
+                <Cigarette className="h-4 w-4" />
+                Add Cigar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Cigar</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Brand *</Label>
+                    <Input
+                      value={newCigar.brand}
+                      onChange={(e) => setNewCigar({ ...newCigar, brand: e.target.value })}
+                      placeholder="e.g., Padron"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Line/Series *</Label>
+                    <Input
+                      value={newCigar.line}
+                      onChange={(e) => setNewCigar({ ...newCigar, line: e.target.value })}
+                      placeholder="e.g., 1926 Serie"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Vitola *</Label>
+                    <Select
+                      value={newCigar.vitola}
+                      onValueChange={(v) => setNewCigar({ ...newCigar, vitola: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select vitola" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {VITOLA_OPTIONS.map((v) => (
+                          <SelectItem key={v} value={v}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Wrapper</Label>
+                    <Select
+                      value={newCigar.wrapper}
+                      onValueChange={(v) => setNewCigar({ ...newCigar, wrapper: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select wrapper" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WRAPPER_OPTIONS.map((w) => (
+                          <SelectItem key={w} value={w}>{w}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Origin</Label>
+                    <Select
+                      value={newCigar.origin}
+                      onValueChange={(v) => setNewCigar({ ...newCigar, origin: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select origin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ORIGIN_OPTIONS.map((o) => (
+                          <SelectItem key={o} value={o}>{o}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Strength</Label>
+                    <Select
+                      value={newCigar.strength}
+                      onValueChange={(v) => setNewCigar({ ...newCigar, strength: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select strength" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STRENGTH_OPTIONS.map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Size (e.g., 5 x 50)</Label>
+                  <Input
+                    value={newCigar.size}
+                    onChange={(e) => setNewCigar({ ...newCigar, size: e.target.value })}
+                    placeholder="Length x Ring Gauge"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleAddCigar}
+                  disabled={addingCigar || !newCigar.brand || !newCigar.line || !newCigar.vitola}
+                  className="w-full"
+                >
+                  {addingCigar ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Cigar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="card-elevated p-3 text-center">
+            <p className="text-2xl font-bold text-primary">{cigars.length}</p>
+            <p className="text-xs text-muted-foreground">Total Cigars</p>
+          </div>
+          <div className="card-elevated p-3 text-center">
+            <p className="text-2xl font-bold text-primary">{bandImages.length}</p>
+            <p className="text-xs text-muted-foreground">Band Images</p>
+          </div>
+          <div className="card-elevated p-3 text-center">
+            <p className="text-2xl font-bold text-primary">{pendingRequestsCount}</p>
+            <p className="text-xs text-muted-foreground">Pending</p>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full">
-            <TabsTrigger value="images" className="flex-1 gap-2">
-              <ImageIcon className="h-4 w-4" />
-              Band Images
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="images" className="gap-1 text-xs">
+              <ImageIcon className="h-3.5 w-3.5" />
+              Images
             </TabsTrigger>
-            <TabsTrigger value="requests" className="flex-1 gap-2 relative">
-              <MessageSquare className="h-4 w-4" />
+            <TabsTrigger value="scraper" className="gap-1 text-xs">
+              <Globe className="h-3.5 w-3.5" />
+              Scraper
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="gap-1 text-xs relative">
+              <MessageSquare className="h-3.5 w-3.5" />
               Requests
               {pendingRequestsCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 text-xs flex items-center justify-center">
+                <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center">
                   {pendingRequestsCount}
                 </Badge>
               )}
@@ -442,7 +762,6 @@ export default function AdminBandImages() {
                   </DialogHeader>
 
                   <div className="space-y-4 pt-4">
-                    {/* Cigar Search */}
                     <div className="space-y-2">
                       <Label>Select Cigar</Label>
                       <div className="relative">
@@ -489,7 +808,6 @@ export default function AdminBandImages() {
                       )}
                     </div>
 
-                    {/* Image Upload */}
                     <div className="space-y-2">
                       <Label>Band Image</Label>
                       <input
@@ -530,7 +848,6 @@ export default function AdminBandImages() {
                       )}
                     </div>
 
-                    {/* Description */}
                     <div className="space-y-2">
                       <Label>Description (optional)</Label>
                       <Input
@@ -540,7 +857,6 @@ export default function AdminBandImages() {
                       />
                     </div>
 
-                    {/* Primary Toggle */}
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -554,7 +870,6 @@ export default function AdminBandImages() {
                       </Label>
                     </div>
 
-                    {/* Status indicator */}
                     {(!selectedCigarId || !selectedFile) && (
                       <div className="text-sm text-amber-500 bg-amber-500/10 rounded-lg p-3 space-y-1">
                         <p className="font-medium">Before uploading:</p>
@@ -565,7 +880,6 @@ export default function AdminBandImages() {
                       </div>
                     )}
 
-                    {/* Submit */}
                     <Button
                       onClick={handleUpload}
                       disabled={!selectedCigarId || !selectedFile || uploading}
@@ -589,7 +903,6 @@ export default function AdminBandImages() {
               </Dialog>
             </div>
 
-            {/* Image Grid */}
             {bandImages.length === 0 ? (
               <div className="card-elevated flex flex-col items-center justify-center py-16 text-center">
                 <div className="mb-4 rounded-full bg-muted p-4">
@@ -635,6 +948,91 @@ export default function AdminBandImages() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Scraper Tab */}
+          <TabsContent value="scraper" className="space-y-4 mt-4">
+            <div className="card-elevated p-4 space-y-4">
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                <h3 className="font-medium text-foreground">Elite Cigar Library Scraper</h3>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Search for cigars from the Elite Cigar Library database and import them directly.
+              </p>
+
+              <div className="flex gap-2">
+                <Input
+                  value={scrapeQuery}
+                  onChange={(e) => setScrapeQuery(e.target.value)}
+                  placeholder="Search cigars (e.g., 'Padron', 'Fuente')"
+                  onKeyDown={(e) => e.key === "Enter" && handleScrape()}
+                />
+                <Button onClick={handleScrape} disabled={scraping}>
+                  {scraping ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {scrapedCigars.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Found {scrapedCigars.length} cigars
+                </p>
+                
+                {scrapedCigars.map((cigar, index) => (
+                  <div key={index} className="card-elevated p-4 flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-foreground truncate">
+                        {cigar.name || `${cigar.brand} ${cigar.line}`}
+                      </h4>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {cigar.vitola && (
+                          <Badge variant="secondary" className="text-xs">{cigar.vitola}</Badge>
+                        )}
+                        {cigar.origin && (
+                          <Badge variant="outline" className="text-xs">{cigar.origin}</Badge>
+                        )}
+                        {cigar.wrapper && (
+                          <Badge variant="outline" className="text-xs">{cigar.wrapper}</Badge>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleImportCigar(cigar, index)}
+                      disabled={importingIndex === index}
+                    >
+                      {importingIndex === index ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-1" />
+                          Import
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!scraping && scrapedCigars.length === 0 && (
+              <div className="card-elevated flex flex-col items-center justify-center py-12 text-center">
+                <div className="mb-4 rounded-full bg-muted p-4">
+                  <Globe className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">Search for Cigars</h3>
+                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                  Enter a brand name or cigar name above to search the Elite Cigar Library.
+                </p>
               </div>
             )}
           </TabsContent>
