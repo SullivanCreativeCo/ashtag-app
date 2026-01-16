@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SuggestedCigar {
   brand: string | null;
@@ -33,7 +34,7 @@ interface AddCigarSheetProps {
   onClose: () => void;
   suggestedCigar?: SuggestedCigar;
   capturedImage?: string;
-  onSuccess?: (cigarId: string) => void;
+  onSuccess?: () => void;
 }
 
 const VITOLA_OPTIONS = [
@@ -96,7 +97,9 @@ export function AddCigarSheet({
   onSuccess,
 }: AddCigarSheetProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   
   const [brand, setBrand] = useState(suggestedCigar?.brand || "");
   const [line, setLine] = useState(suggestedCigar?.line || "");
@@ -109,10 +112,19 @@ export function AddCigarSheet({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!brand.trim() || !line.trim() || !vitola.trim()) {
+    if (!brand.trim() || !line.trim()) {
       toast({
         title: "Missing fields",
-        description: "Brand, line, and vitola are required",
+        description: "Brand and line are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Not signed in",
+        description: "Please sign in to submit cigars",
         variant: "destructive",
       });
       return;
@@ -121,27 +133,10 @@ export function AddCigarSheet({
     setLoading(true);
 
     try {
-      // Insert the new cigar
-      const { data: cigar, error: cigarError } = await supabase
-        .from("cigars")
-        .insert({
-          brand: brand.trim(),
-          line: line.trim(),
-          vitola: vitola.trim(),
-          wrapper: wrapper.trim() || null,
-          origin: origin.trim() || null,
-          strength_profile: strength || null,
-          size: size.trim() || null,
-        })
-        .select()
-        .single();
-
-      if (cigarError) throw cigarError;
-
-      // If we have a captured image, add it as the band reference
-      if (capturedImage && cigar) {
-        // Upload the image to storage
-        const fileName = `${cigar.id}/${Date.now()}.jpg`;
+      // Upload the image if we have one
+      let imageUrl: string | null = null;
+      if (capturedImage) {
+        const fileName = `pending/${user.id}/${Date.now()}.jpg`;
         const base64Data = capturedImage.replace(/^data:image\/\w+;base64,/, "");
         const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
@@ -155,27 +150,36 @@ export function AddCigarSheet({
           const { data: urlData } = supabase.storage
             .from("cigar-bands")
             .getPublicUrl(fileName);
-
-          // Add to cigar_band_images
-          await supabase.from("cigar_band_images").insert({
-            cigar_id: cigar.id,
-            image_url: urlData.publicUrl,
-            is_primary: true,
-          });
+          imageUrl = urlData.publicUrl;
         }
       }
 
-      toast({
-        title: "Cigar added!",
-        description: `${brand} ${line} has been added to the database`,
+      // Submit to cigar_requests for admin approval
+      const { error } = await supabase.from("cigar_requests").insert({
+        user_id: user.id,
+        requested_name: `${brand.trim()} ${line.trim()}`,
+        details: `Vitola: ${vitola || "Not specified"}`,
+        vitola: vitola || null,
+        wrapper: wrapper || null,
+        origin: origin || null,
+        strength_profile: strength || null,
+        size: size || null,
+        image_url: imageUrl,
       });
 
-      onSuccess?.(cigar.id);
-      onClose();
-    } catch (error) {
-      console.error("Error adding cigar:", error);
+      if (error) throw error;
+
+      setSubmitted(true);
       toast({
-        title: "Failed to add cigar",
+        title: "Submitted for review!",
+        description: "An admin will review your submission shortly",
+      });
+
+      onSuccess?.();
+    } catch (error) {
+      console.error("Error submitting cigar:", error);
+      toast({
+        title: "Failed to submit",
         description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
@@ -184,16 +188,52 @@ export function AddCigarSheet({
     }
   };
 
+  const handleClose = () => {
+    setSubmitted(false);
+    setBrand(suggestedCigar?.brand || "");
+    setLine(suggestedCigar?.line || "");
+    setVitola(suggestedCigar?.vitola || "");
+    setWrapper(suggestedCigar?.wrapper || "");
+    setOrigin(suggestedCigar?.origin || "");
+    setStrength("");
+    setSize("");
+    onClose();
+  };
+
+  if (submitted) {
+    return (
+      <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <SheetContent side="bottom" className="h-auto">
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="mb-4 rounded-full bg-primary/10 p-4">
+              <Clock className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">
+              Submitted for Review
+            </h3>
+            <p className="text-sm text-muted-foreground mt-2 max-w-xs">
+              Your cigar submission has been sent to our admins. 
+              Once approved, it will be added to the Ashtag database!
+            </p>
+            <Button onClick={handleClose} className="mt-6">
+              Got it
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            Add to Ashtag Database
+            Submit to Ashtag Database
           </SheetTitle>
           <SheetDescription>
-            This cigar wasn't found in our database. Help us grow by adding it!
+            Help us grow! Your submission will be reviewed by an admin before being added.
           </SheetDescription>
         </SheetHeader>
 
@@ -234,7 +274,7 @@ export function AddCigarSheet({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="vitola">Vitola *</Label>
+              <Label htmlFor="vitola">Vitola</Label>
               <Select value={vitola} onValueChange={setVitola}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select vitola" />
@@ -310,11 +350,16 @@ export function AddCigarSheet({
             />
           </div>
 
+          <div className="rounded-lg bg-muted/50 p-3 text-sm text-muted-foreground">
+            <Clock className="inline h-4 w-4 mr-1" />
+            Submissions are reviewed by admins before being added to the database.
+          </div>
+
           <div className="flex gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1"
               disabled={loading}
             >
@@ -324,10 +369,10 @@ export function AddCigarSheet({
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adding...
+                  Submitting...
                 </>
               ) : (
-                "Add Cigar"
+                "Submit for Review"
               )}
             </Button>
           </div>

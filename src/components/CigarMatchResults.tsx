@@ -108,8 +108,8 @@ export function CigarMatchResults({
     origin: result.extractedInfo?.origin || null,
   };
 
-  const handleAddSuccess = (cigarId: string) => {
-    onSelectMatch(cigarId);
+  const handleAddSuccess = () => {
+    // Submission sent for review - just close the sheet
   };
 
   return (

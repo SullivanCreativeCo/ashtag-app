@@ -57,25 +57,43 @@ export type Database = {
           created_at: string
           details: string | null
           id: string
+          image_url: string | null
+          origin: string | null
           requested_name: string
+          size: string | null
           status: Database["public"]["Enums"]["request_status"]
+          strength_profile: string | null
           user_id: string
+          vitola: string | null
+          wrapper: string | null
         }
         Insert: {
           created_at?: string
           details?: string | null
           id?: string
+          image_url?: string | null
+          origin?: string | null
           requested_name: string
+          size?: string | null
           status?: Database["public"]["Enums"]["request_status"]
+          strength_profile?: string | null
           user_id: string
+          vitola?: string | null
+          wrapper?: string | null
         }
         Update: {
           created_at?: string
           details?: string | null
           id?: string
+          image_url?: string | null
+          origin?: string | null
           requested_name?: string
+          size?: string | null
           status?: Database["public"]["Enums"]["request_status"]
+          strength_profile?: string | null
           user_id?: string
+          vitola?: string | null
+          wrapper?: string | null
         }
         Relationships: []
       }
