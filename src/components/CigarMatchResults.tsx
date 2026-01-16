@@ -1,6 +1,8 @@
-import { Check, AlertCircle, ChevronRight, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Check, AlertCircle, ChevronRight, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AddCigarSheet } from "./AddCigarSheet";
 
 interface CigarMatch {
   cigarId: string;
@@ -11,14 +13,27 @@ interface CigarMatch {
   matchReason: string;
 }
 
+interface SuggestedCigar {
+  brand: string | null;
+  line: string | null;
+  vitola: string | null;
+  wrapper: string | null;
+  origin: string | null;
+}
+
 interface MatchResult {
   identified: boolean;
   confidence: number;
   extractedInfo: {
     brand: string | null;
     line: string | null;
+    shape?: string | null;
+    wrapper?: string | null;
+    origin?: string | null;
     otherText: string | null;
   };
+  suggestAddToDatabase?: boolean;
+  suggestedCigar?: SuggestedCigar;
   matches: CigarMatch[];
 }
 
@@ -41,6 +56,8 @@ export function CigarMatchResults({
   onManualSearch,
   onRetake,
 }: CigarMatchResultsProps) {
+  const [showAddSheet, setShowAddSheet] = useState(false);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -78,6 +95,22 @@ export function CigarMatchResults({
 
   const hasMatches = result.matches && result.matches.length > 0;
   const topMatch = hasMatches ? result.matches[0] : null;
+  const shouldSuggestAdd = result.suggestAddToDatabase || 
+    (!hasMatches) || 
+    (topMatch && topMatch.confidence < 50);
+
+  // Build suggested cigar from extracted info if not provided
+  const suggestedCigar: SuggestedCigar = result.suggestedCigar || {
+    brand: result.extractedInfo?.brand || null,
+    line: result.extractedInfo?.line || null,
+    vitola: result.extractedInfo?.shape || null,
+    wrapper: result.extractedInfo?.wrapper || null,
+    origin: result.extractedInfo?.origin || null,
+  };
+
+  const handleAddSuccess = (cigarId: string) => {
+    onSelectMatch(cigarId);
+  };
 
   return (
     <div className="space-y-4">
@@ -99,20 +132,62 @@ export function CigarMatchResults({
       {/* Extracted Info */}
       {result.extractedInfo && (result.extractedInfo.brand || result.extractedInfo.line) && (
         <div className="rounded-lg bg-muted/50 p-3">
-          <p className="text-xs text-muted-foreground mb-1">Detected text:</p>
+          <p className="text-xs text-muted-foreground mb-1">Detected on band:</p>
           <p className="text-sm font-medium text-foreground">
-            {[result.extractedInfo.brand, result.extractedInfo.line]
+            {[
+              result.extractedInfo.brand, 
+              result.extractedInfo.line,
+              result.extractedInfo.shape && `(${result.extractedInfo.shape})`,
+            ]
               .filter(Boolean)
               .join(" • ")}
           </p>
+          {result.extractedInfo.origin && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Origin: {result.extractedInfo.origin}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Add to Database Prompt */}
+      {shouldSuggestAdd && (
+        <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-primary/10 p-2">
+              <Plus className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-foreground">
+                Not in our database yet
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {result.extractedInfo?.brand 
+                  ? `We detected "${result.extractedInfo.brand}" but couldn't find an exact match.`
+                  : "We couldn't identify this cigar band."}
+                {" "}Would you like to add it to Ashtag?
+              </p>
+              <Button 
+                onClick={() => setShowAddSheet(true)}
+                className="mt-3"
+                size="sm"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add to Database
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Match Results */}
-      {hasMatches ? (
+      {hasMatches && (
         <div className="space-y-2">
           <p className="text-sm font-medium text-foreground">
-            {result.matches.length === 1 ? "Best Match" : "Possible Matches"}
+            {topMatch && topMatch.confidence >= 50 
+              ? (result.matches.length === 1 ? "Best Match" : "Possible Matches")
+              : "Low confidence matches"
+            }
           </p>
           
           {result.matches.slice(0, 3).map((match, index) => (
@@ -155,7 +230,10 @@ export function CigarMatchResults({
             </button>
           ))}
         </div>
-      ) : (
+      )}
+
+      {/* No matches at all */}
+      {!hasMatches && !shouldSuggestAdd && (
         <div className="text-center py-6">
           <p className="text-foreground font-medium">No matches found</p>
           <p className="text-sm text-muted-foreground mt-1">
@@ -173,6 +251,15 @@ export function CigarMatchResults({
           {hasMatches ? "Not my cigar" : "Search Manually"}
         </Button>
       </div>
+
+      {/* Add Cigar Sheet */}
+      <AddCigarSheet
+        isOpen={showAddSheet}
+        onClose={() => setShowAddSheet(false)}
+        suggestedCigar={suggestedCigar}
+        capturedImage={capturedImage}
+        onSuccess={handleAddSuccess}
+      />
     </div>
   );
 }
