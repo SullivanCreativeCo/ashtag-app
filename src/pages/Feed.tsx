@@ -6,6 +6,7 @@ import { useFriendships } from "@/hooks/useFriendships";
 import { AppLayout } from "@/components/AppLayout";
 import { SmokeLogCard } from "@/components/SmokeLogCard";
 import { StickPickOfWeek } from "@/components/StickPickOfWeek";
+import { NewCigarAdditions } from "@/components/NewCigarAdditions";
 import { CameraCapture } from "@/components/CameraCapture";
 import { FriendRequestBadge } from "@/components/FriendRequestBadge";
 import { FriendRequestsSheet } from "@/components/FriendRequestsSheet";
@@ -210,6 +211,9 @@ export default function Feed() {
 
         {/* Stick Pick of the Week - only on Everyone tab */}
         {feedFilter === "all" && <StickPickOfWeek />}
+
+        {/* New Cigar Additions - only on Everyone tab */}
+        {feedFilter === "all" && <NewCigarAdditions />}
 
         <div className="px-3">
           {loading ? (
