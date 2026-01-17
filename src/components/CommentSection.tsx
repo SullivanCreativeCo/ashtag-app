@@ -144,11 +144,12 @@ export function CommentSection({ smokeLogId, onCommentCountChange, onAuthRequire
               <Textarea
                 placeholder={user ? "Add a comment..." : "Sign in to comment"}
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
+                onChange={(e) => setNewComment(e.target.value.slice(0, 1000))}
                 onFocus={handleInputFocus}
                 disabled={!user}
                 className="min-h-[40px] max-h-[120px] resize-none text-sm"
                 rows={1}
+                maxLength={1000}
               />
               <Button
                 size="icon"

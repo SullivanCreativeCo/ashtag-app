@@ -320,9 +320,18 @@ export default function Rate() {
   const handleRequestCigar = async () => {
     if (!user || !searchQuery.trim()) return;
 
+    if (searchQuery.length > 200) {
+      toast({
+        title: "Name too long",
+        description: "Cigar name must be under 200 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase.from("cigar_requests").insert({
       user_id: user.id,
-      requested_name: searchQuery,
+      requested_name: searchQuery.slice(0, 200),
     });
 
     if (error) {
@@ -609,13 +618,15 @@ export default function Rate() {
             {/* Notes */}
             <div className="space-y-2">
               <Label htmlFor="notes">Tasting Notes (optional)</Label>
-              <Textarea
+            <Textarea
                 id="notes"
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => setNotes(e.target.value.slice(0, 2000))}
                 placeholder="Describe your experience..."
                 className="min-h-[120px] bg-card"
+                maxLength={2000}
               />
+              <p className="text-xs text-muted-foreground text-right">{notes.length}/2000</p>
             </div>
 
             {/* Spacer for sticky button */}

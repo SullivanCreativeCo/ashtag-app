@@ -852,8 +852,9 @@ export default function AdminBandImages() {
                       <Label>Description (optional)</Label>
                       <Input
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={(e) => setDescription(e.target.value.slice(0, 500))}
                         placeholder="e.g., Front view, Gold band variant..."
+                        maxLength={500}
                       />
                     </div>
 
