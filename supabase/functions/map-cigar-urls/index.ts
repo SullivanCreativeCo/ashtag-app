@@ -5,6 +5,79 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Parse XML sitemap and extract URLs
+function parseSitemapXml(xml: string): string[] {
+  const urls: string[] = [];
+  
+  // Match <loc> tags which contain URLs
+  const locRegex = /<loc>([^<]+)<\/loc>/gi;
+  let match;
+  while ((match = locRegex.exec(xml)) !== null) {
+    urls.push(match[1].trim());
+  }
+  
+  return urls;
+}
+
+// Check if URL is a sitemap index (contains links to other sitemaps)
+function isSitemapIndex(xml: string): boolean {
+  return xml.includes('<sitemapindex') || xml.includes('<sitemap>');
+}
+
+// Fetch and parse a sitemap, handling sitemap indexes recursively
+async function fetchSitemap(url: string, maxDepth = 2): Promise<string[]> {
+  const allUrls: string[] = [];
+  
+  try {
+    console.log(`Fetching sitemap: ${url}`);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; CigarBot/1.0)',
+        'Accept': 'application/xml, text/xml, */*',
+      },
+    });
+    
+    if (!response.ok) {
+      console.log(`Sitemap fetch failed: ${response.status}`);
+      return allUrls;
+    }
+    
+    const xml = await response.text();
+    const urls = parseSitemapXml(xml);
+    
+    console.log(`Parsed ${urls.length} URLs from ${url}`);
+    
+    // Check if this is a sitemap index
+    if (isSitemapIndex(xml) && maxDepth > 0) {
+      console.log('Detected sitemap index, fetching child sitemaps...');
+      
+      // Filter to only sitemap URLs (usually end in .xml)
+      const sitemapUrls = urls.filter(u => 
+        u.endsWith('.xml') || u.includes('sitemap')
+      );
+      
+      // Limit to first 10 child sitemaps to avoid timeout
+      const limitedSitemaps = sitemapUrls.slice(0, 10);
+      console.log(`Processing ${limitedSitemaps.length} child sitemaps`);
+      
+      for (const sitemapUrl of limitedSitemaps) {
+        const childUrls = await fetchSitemap(sitemapUrl, maxDepth - 1);
+        allUrls.push(...childUrls);
+        
+        // Small delay to be nice to servers
+        await new Promise(r => setTimeout(r, 200));
+      }
+    } else {
+      // Regular sitemap with product URLs
+      allUrls.push(...urls);
+    }
+  } catch (error) {
+    console.error(`Error fetching sitemap ${url}:`, error);
+  }
+  
+  return allUrls;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -13,15 +86,6 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
-
-    if (!firecrawlApiKey) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Firecrawl API key not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Verify admin
@@ -48,7 +112,7 @@ Deno.serve(async (req) => {
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
     if (!roleData) {
       return new Response(
@@ -64,7 +128,7 @@ Deno.serve(async (req) => {
       .from('scrape_sources')
       .select('*')
       .eq('name', sourceName)
-      .single();
+      .maybeSingle();
 
     if (sourceError || !source) {
       return new Response(
@@ -73,135 +137,112 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Mapping URLs for source: ${sourceName} (${source.base_url})`);
+    console.log(`Mapping URLs for source: ${sourceName}`);
+    console.log(`Sitemap URL: ${source.sitemap_url}`);
+    console.log(`URL pattern: ${source.url_pattern}`);
 
-    // Different URL patterns for different sources
-    let mapUrl = source.base_url;
-    let searchFilter = '';
-    
-    if (sourceName === 'elite_cigar_library') {
-      mapUrl = 'https://elitecigarlibrary.com/cigars';
-      searchFilter = 'cigar';
-    } else if (sourceName === 'famous_smoke') {
-      mapUrl = 'https://www.famous-smoke.com/cigars';
-      searchFilter = 'cigar';
-    } else if (sourceName === 'cigar_aficionado') {
-      mapUrl = 'https://www.cigaraficionado.com/ratings';
-      searchFilter = 'rating';
-    } else if (sourceName === 'halfwheel') {
-      mapUrl = 'https://halfwheel.com/reviews';
-      searchFilter = 'review';
-    } else if (sourceName === 'cigars_international') {
-      mapUrl = 'https://www.cigarsinternational.com/shop/big-list-of-cigars-brands/1803000/';
-      searchFilter = 'cigars';
-    } else if (sourceName === 'thompson_cigar') {
-      mapUrl = 'https://www.thompsoncigar.com/shop/all-cigar-brands/8336/';
-      searchFilter = 'cigars';
-    } else if (sourceName === 'wikipedia_brands') {
-      mapUrl = 'https://en.wikipedia.org/wiki/List_of_cigar_brands';
-      searchFilter = 'cigar';
-    } else if (sourceName === 'cigar_geeks') {
-      mapUrl = 'https://www.cigargeeks.com/index.php?action=cigars';
-      searchFilter = 'cigar';
+    let allUrls: string[] = [];
+
+    // Strategy 1: Use sitemap if available
+    if (source.sitemap_url) {
+      console.log('Using sitemap-first strategy');
+      allUrls = await fetchSitemap(source.sitemap_url);
+      console.log(`Total URLs from sitemap: ${allUrls.length}`);
     }
 
-    // Use Firecrawl map endpoint
-    const response = await fetch('https://api.firecrawl.dev/v1/map', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${firecrawlApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url: mapUrl,
-        search: searchFilter,
-        limit: 5000,
-        includeSubdomains: false,
-      }),
-    });
-
-    const mapData = await response.json();
-
-    if (!response.ok || !mapData.success) {
-      console.error('Firecrawl map error:', mapData);
-      return new Response(
-        JSON.stringify({ success: false, error: mapData.error || 'Failed to map URLs' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const urls = mapData.links || [];
-    console.log(`Found ${urls.length} URLs`);
-
-    // Filter URLs to only include cigar-specific pages
-    const cigarUrls = urls.filter((url: string) => {
-      if (sourceName === 'elite_cigar_library') {
-        return url.includes('/cigars/') && !url.endsWith('/cigars/') && !url.includes('?');
-      } else if (sourceName === 'famous_smoke') {
-        return url.includes('/cigars/') && url.includes('-cigars');
-      } else if (sourceName === 'cigar_aficionado') {
-        return url.includes('/ratings/') && url.match(/\/\d+$/);
-      } else if (sourceName === 'halfwheel') {
-        return url.includes('/review-') || url.includes('-review');
-      } else if (sourceName === 'cigars_international') {
-        // Match product pages like /p/cigar-name/123456/
-        return url.includes('/p/') && url.match(/\/\d+\/?$/);
-      } else if (sourceName === 'thompson_cigar') {
-        // Match product pages
-        return url.includes('/product/') || (url.includes('/shop/') && url.match(/\/\d+\/?$/));
-      } else if (sourceName === 'wikipedia_brands') {
-        // Wikipedia links to brand pages - we'll scrape the main list instead
-        return url.includes('/wiki/') && !url.includes(':') && !url.includes('List_of') && url !== 'https://en.wikipedia.org/wiki/Cigar';
-      } else if (sourceName === 'cigar_geeks') {
-        return url.includes('action=cigar') && url.includes('cigar_id=');
+    // If sitemap failed or returned nothing, try common sitemap paths
+    if (allUrls.length === 0) {
+      console.log('Sitemap empty, trying common paths...');
+      const commonPaths = [
+        '/sitemap.xml',
+        '/sitemap_index.xml',
+        '/sitemaps/sitemap.xml',
+        '/sitemap/sitemap.xml',
+      ];
+      
+      for (const path of commonPaths) {
+        const tryUrl = source.base_url + path;
+        allUrls = await fetchSitemap(tryUrl);
+        if (allUrls.length > 0) {
+          console.log(`Found sitemap at ${tryUrl}`);
+          break;
+        }
       }
-      return false;
+    }
+
+    // Filter URLs using the pattern
+    let filteredUrls = allUrls;
+    if (source.url_pattern) {
+      filteredUrls = allUrls.filter(url => url.includes(source.url_pattern));
+      console.log(`Filtered to ${filteredUrls.length} URLs matching pattern "${source.url_pattern}"`);
+    }
+
+    // Additional filters to remove non-product pages
+    filteredUrls = filteredUrls.filter(url => {
+      // Exclude common non-product paths
+      const excludePatterns = [
+        '/cart', '/checkout', '/account', '/login', '/register',
+        '/blog', '/news', '/about', '/contact', '/help', '/faq',
+        '/privacy', '/terms', '/shipping', '/returns',
+        '.jpg', '.png', '.gif', '.pdf', '.css', '.js'
+      ];
+      return !excludePatterns.some(pattern => url.toLowerCase().includes(pattern));
     });
 
-    console.log(`Filtered to ${cigarUrls.length} cigar URLs`);
+    console.log(`After filtering: ${filteredUrls.length} product URLs`);
+
+    // Limit to first 5000 URLs to avoid overwhelming the queue
+    const urlsToInsert = filteredUrls.slice(0, 5000);
 
     // Insert URLs into queue, ignoring duplicates
     let insertedCount = 0;
     let duplicateCount = 0;
 
-    for (const url of cigarUrls) {
+    // Batch insert for efficiency
+    const batchSize = 100;
+    for (let i = 0; i < urlsToInsert.length; i += batchSize) {
+      const batch = urlsToInsert.slice(i, i + batchSize).map(url => ({
+        source_url: url,
+        source_name: sourceName,
+        status: 'pending',
+      }));
+
       const { error: insertError } = await supabase
         .from('scrape_queue')
-        .insert({
-          source_url: url,
-          source_name: sourceName,
-          status: 'pending',
-        });
+        .upsert(batch, { onConflict: 'source_url', ignoreDuplicates: true });
 
       if (insertError) {
-        if (insertError.code === '23505') { // Unique violation
-          duplicateCount++;
-        } else {
-          console.error('Insert error:', insertError);
-        }
+        console.error('Batch insert error:', insertError);
       } else {
-        insertedCount++;
+        insertedCount += batch.length;
       }
     }
+
+    // Count actual new vs duplicates
+    const { count: pendingCount } = await supabase
+      .from('scrape_queue')
+      .select('*', { count: 'exact', head: true })
+      .eq('source_name', sourceName)
+      .eq('status', 'pending');
 
     // Update source stats
     await supabase
       .from('scrape_sources')
       .update({
         last_mapped_at: new Date().toISOString(),
-        total_urls_found: cigarUrls.length,
+        total_urls_found: filteredUrls.length,
       })
       .eq('name', sourceName);
 
-    console.log(`Inserted ${insertedCount} new URLs, ${duplicateCount} duplicates skipped`);
+    console.log(`Mapping complete: ${filteredUrls.length} URLs found, ~${insertedCount} processed`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        totalFound: urls.length,
-        cigarUrls: cigarUrls.length,
-        inserted: insertedCount,
-        duplicates: duplicateCount,
+        totalFound: allUrls.length,
+        filtered: filteredUrls.length,
+        queued: urlsToInsert.length,
+        pendingInQueue: pendingCount || 0,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
