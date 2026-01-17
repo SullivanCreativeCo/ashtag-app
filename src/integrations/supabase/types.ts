@@ -281,6 +281,83 @@ export type Database = {
         }
         Relationships: []
       }
+      scrape_queue: {
+        Row: {
+          cigar_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          processed_at: string | null
+          retry_count: number
+          source_name: string
+          source_url: string
+          status: string
+        }
+        Insert: {
+          cigar_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          retry_count?: number
+          source_name?: string
+          source_url: string
+          status?: string
+        }
+        Update: {
+          cigar_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          retry_count?: number
+          source_name?: string
+          source_url?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scrape_queue_cigar_id_fkey"
+            columns: ["cigar_id"]
+            isOneToOne: false
+            referencedRelation: "cigars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scrape_sources: {
+        Row: {
+          base_url: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_mapped_at: string | null
+          name: string
+          total_processed: number | null
+          total_urls_found: number | null
+        }
+        Insert: {
+          base_url: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_mapped_at?: string | null
+          name: string
+          total_processed?: number | null
+          total_urls_found?: number | null
+        }
+        Update: {
+          base_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_mapped_at?: string | null
+          name?: string
+          total_processed?: number | null
+          total_urls_found?: number | null
+        }
+        Relationships: []
+      }
       smoke_logs: {
         Row: {
           burn: number
