@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const adminEmail = Deno.env.get("ADMIN_NOTIFICATION_EMAIL") || "keegan@sullivancreative.co";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const adminEmail = "keegan@sullivancreative.co";
+    console.log("Sending bug report email to:", adminEmail);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -47,9 +48,9 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Stick Pick <onboarding@resend.dev>",
+        from: "AshTag <onboarding@resend.dev>",
         to: [adminEmail],
-        subject: `Bug Report from ${userName || "Anonymous User"}`,
+        subject: `🐛 Bug Report from ${userName || "Anonymous User"}`,
         html: `
           <h1>🐛 New Bug Report</h1>
           <p><strong>From:</strong> ${userName || "Anonymous"} (${userEmail || "No email provided"})</p>
