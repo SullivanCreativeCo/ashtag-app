@@ -38,6 +38,9 @@ import {
   MessageSquare,
   Globe,
   Cigarette,
+  Play,
+  RefreshCw,
+  Database,
 } from "lucide-react";
 
 interface Cigar {
@@ -77,6 +80,24 @@ interface ScrapedCigar {
   length?: string;
   wrapper?: string;
   description?: string;
+}
+
+interface ScrapeSource {
+  id: string;
+  name: string;
+  base_url: string;
+  last_mapped_at: string | null;
+  total_urls_found: number;
+  total_processed: number;
+  is_active: boolean;
+}
+
+interface QueueStats {
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  duplicate: number;
 }
 
 const VITOLA_OPTIONS = [
@@ -145,6 +166,12 @@ export default function AdminBandImages() {
   const [scrapedCigars, setScrapedCigars] = useState<ScrapedCigar[]>([]);
   const [importingIndex, setImportingIndex] = useState<number | null>(null);
 
+  // Automated scraper state
+  const [scrapeSources, setScrapeSources] = useState<ScrapeSource[]>([]);
+  const [queueStats, setQueueStats] = useState<QueueStats>({ pending: 0, processing: 0, completed: 0, failed: 0, duplicate: 0 });
+  const [mappingSource, setMappingSource] = useState<string | null>(null);
+  const [processingQueue, setProcessingQueue] = useState(false);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -158,6 +185,8 @@ export default function AdminBandImages() {
     if (isAdmin) {
       fetchData();
       fetchCigarRequests();
+      fetchScrapeSources();
+      fetchQueueStats();
     }
   }, [isAdmin]);
 
@@ -236,6 +265,96 @@ export default function AdminBandImages() {
       }));
 
       setCigarRequests(requestsWithProfiles as CigarRequest[]);
+    }
+  };
+
+  const fetchScrapeSources = async () => {
+    const { data, error } = await supabase
+      .from("scrape_sources")
+      .select("*")
+      .order("name");
+
+    if (!error && data) {
+      setScrapeSources(data as ScrapeSource[]);
+    }
+  };
+
+  const fetchQueueStats = async () => {
+    const { data, error } = await supabase
+      .from("scrape_queue")
+      .select("status");
+
+    if (!error && data) {
+      const stats: QueueStats = { pending: 0, processing: 0, completed: 0, failed: 0, duplicate: 0 };
+      data.forEach((item: { status: string }) => {
+        if (item.status in stats) {
+          stats[item.status as keyof QueueStats]++;
+        }
+      });
+      setQueueStats(stats);
+    }
+  };
+
+  const handleMapUrls = async (sourceName: string) => {
+    setMappingSource(sourceName);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke("map-cigar-urls", {
+        body: { sourceName },
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "URLs Mapped!",
+        description: `Found ${data.cigarUrls} cigar pages. Added ${data.inserted} new URLs to queue.`,
+      });
+
+      fetchScrapeSources();
+      fetchQueueStats();
+    } catch (error) {
+      console.error("Map error:", error);
+      toast({
+        title: "Mapping failed",
+        description: error instanceof Error ? error.message : "Failed to map URLs",
+        variant: "destructive",
+      });
+    } finally {
+      setMappingSource(null);
+    }
+  };
+
+  const handleProcessQueue = async (batchSize = 5) => {
+    setProcessingQueue(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("process-scrape-queue", {
+        body: { batchSize },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: "Batch processed!",
+        description: `Processed ${data.processed} items: ${data.inserted} inserted, ${data.duplicates} duplicates, ${data.failed} failed.`,
+      });
+
+      fetchData();
+      fetchQueueStats();
+    } catch (error) {
+      console.error("Process error:", error);
+      toast({
+        title: "Processing failed",
+        description: error instanceof Error ? error.message : "Failed to process queue",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingQueue(false);
     }
   };
 
@@ -955,14 +1074,135 @@ export default function AdminBandImages() {
 
           {/* Scraper Tab */}
           <TabsContent value="scraper" className="space-y-4 mt-4">
-            <div className="card-elevated p-4 space-y-4">
-              <div className="flex items-center gap-2">
-                <Globe className="h-5 w-5 text-primary" />
-                <h3 className="font-medium text-foreground">Elite Cigar Library Scraper</h3>
+            {/* Queue Stats */}
+            <div className="grid grid-cols-5 gap-2">
+              <div className="card-elevated p-2 text-center">
+                <p className="text-lg font-bold text-amber-500">{queueStats.pending}</p>
+                <p className="text-[10px] text-muted-foreground">Pending</p>
+              </div>
+              <div className="card-elevated p-2 text-center">
+                <p className="text-lg font-bold text-blue-500">{queueStats.processing}</p>
+                <p className="text-[10px] text-muted-foreground">Processing</p>
+              </div>
+              <div className="card-elevated p-2 text-center">
+                <p className="text-lg font-bold text-green-500">{queueStats.completed}</p>
+                <p className="text-[10px] text-muted-foreground">Complete</p>
+              </div>
+              <div className="card-elevated p-2 text-center">
+                <p className="text-lg font-bold text-muted-foreground">{queueStats.duplicate}</p>
+                <p className="text-[10px] text-muted-foreground">Duplicate</p>
+              </div>
+              <div className="card-elevated p-2 text-center">
+                <p className="text-lg font-bold text-red-500">{queueStats.failed}</p>
+                <p className="text-[10px] text-muted-foreground">Failed</p>
+              </div>
+            </div>
+
+            {/* Process Queue Button */}
+            <div className="card-elevated p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Database className="h-5 w-5 text-primary" />
+                  <h3 className="font-medium text-foreground">Auto-Import Queue</h3>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { fetchQueueStats(); fetchScrapeSources(); }}
+                  className="gap-1"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  Refresh
+                </Button>
               </div>
               
               <p className="text-sm text-muted-foreground">
-                Search for cigars from the Elite Cigar Library database and import them directly.
+                Process {queueStats.pending} pending URLs in the queue. Each batch scrapes and imports cigars automatically.
+              </p>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleProcessQueue(5)}
+                  disabled={processingQueue || queueStats.pending === 0}
+                  className="flex-1"
+                >
+                  {processingQueue ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="mr-2 h-4 w-4" />
+                      Process 5
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleProcessQueue(10)}
+                  disabled={processingQueue || queueStats.pending === 0}
+                >
+                  Process 10
+                </Button>
+              </div>
+            </div>
+
+            {/* Data Sources */}
+            <div className="card-elevated p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                <h3 className="font-medium text-foreground">Data Sources</h3>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Map URLs from cigar databases to add them to the processing queue.
+              </p>
+
+              <div className="space-y-2">
+                {scrapeSources.map((source) => (
+                  <div key={source.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground text-sm truncate">
+                        {source.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </p>
+                      <div className="flex gap-3 text-xs text-muted-foreground">
+                        <span>{source.total_urls_found} URLs</span>
+                        <span>{source.total_processed} processed</span>
+                        {source.last_mapped_at && (
+                          <span>Last: {new Date(source.last_mapped_at).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleMapUrls(source.name)}
+                      disabled={mappingSource === source.name || !source.is_active}
+                    >
+                      {mappingSource === source.name ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Search className="h-4 w-4 mr-1" />
+                          Map
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Manual Search (existing) */}
+            <div className="card-elevated p-4 space-y-4">
+              <div className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-primary" />
+                <h3 className="font-medium text-foreground">Manual Search</h3>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Search and import individual cigars from Elite Cigar Library.
               </p>
 
               <div className="flex gap-2">
@@ -1022,18 +1262,6 @@ export default function AdminBandImages() {
                     </Button>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {!scraping && scrapedCigars.length === 0 && (
-              <div className="card-elevated flex flex-col items-center justify-center py-12 text-center">
-                <div className="mb-4 rounded-full bg-muted p-4">
-                  <Globe className="h-10 w-10 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground">Search for Cigars</h3>
-                <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                  Enter a brand name or cigar name above to search the Elite Cigar Library.
-                </p>
               </div>
             )}
           </TabsContent>
