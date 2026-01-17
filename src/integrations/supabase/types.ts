@@ -333,8 +333,10 @@ export type Database = {
           is_active: boolean | null
           last_mapped_at: string | null
           name: string
+          sitemap_url: string | null
           total_processed: number | null
           total_urls_found: number | null
+          url_pattern: string | null
         }
         Insert: {
           base_url: string
@@ -343,8 +345,10 @@ export type Database = {
           is_active?: boolean | null
           last_mapped_at?: string | null
           name: string
+          sitemap_url?: string | null
           total_processed?: number | null
           total_urls_found?: number | null
+          url_pattern?: string | null
         }
         Update: {
           base_url?: string
@@ -353,8 +357,10 @@ export type Database = {
           is_active?: boolean | null
           last_mapped_at?: string | null
           name?: string
+          sitemap_url?: string | null
           total_processed?: number | null
           total_urls_found?: number | null
+          url_pattern?: string | null
         }
         Relationships: []
       }
