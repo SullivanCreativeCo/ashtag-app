@@ -91,6 +91,18 @@ Deno.serve(async (req) => {
     } else if (sourceName === 'halfwheel') {
       mapUrl = 'https://halfwheel.com/reviews';
       searchFilter = 'review';
+    } else if (sourceName === 'cigars_international') {
+      mapUrl = 'https://www.cigarsinternational.com/shop/big-list-of-cigars-brands/1803000/';
+      searchFilter = 'cigars';
+    } else if (sourceName === 'thompson_cigar') {
+      mapUrl = 'https://www.thompsoncigar.com/shop/all-cigar-brands/8336/';
+      searchFilter = 'cigars';
+    } else if (sourceName === 'wikipedia_brands') {
+      mapUrl = 'https://en.wikipedia.org/wiki/List_of_cigar_brands';
+      searchFilter = 'cigar';
+    } else if (sourceName === 'cigar_geeks') {
+      mapUrl = 'https://www.cigargeeks.com/index.php?action=cigars';
+      searchFilter = 'cigar';
     }
 
     // Use Firecrawl map endpoint
@@ -131,6 +143,17 @@ Deno.serve(async (req) => {
         return url.includes('/ratings/') && url.match(/\/\d+$/);
       } else if (sourceName === 'halfwheel') {
         return url.includes('/review-') || url.includes('-review');
+      } else if (sourceName === 'cigars_international') {
+        // Match product pages like /p/cigar-name/123456/
+        return url.includes('/p/') && url.match(/\/\d+\/?$/);
+      } else if (sourceName === 'thompson_cigar') {
+        // Match product pages
+        return url.includes('/product/') || (url.includes('/shop/') && url.match(/\/\d+\/?$/));
+      } else if (sourceName === 'wikipedia_brands') {
+        // Wikipedia links to brand pages - we'll scrape the main list instead
+        return url.includes('/wiki/') && !url.includes(':') && !url.includes('List_of') && url !== 'https://en.wikipedia.org/wiki/Cigar';
+      } else if (sourceName === 'cigar_geeks') {
+        return url.includes('action=cigar') && url.includes('cigar_id=');
       }
       return false;
     });
