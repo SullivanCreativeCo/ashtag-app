@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.search-nearby-lounges]
 verify_jwt = false
+
+[functions.send-admin-notification]
+verify_jwt = false
