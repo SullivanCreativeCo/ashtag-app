@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+
 interface SmokeLogCardProps {
   log: {
     id: string;
@@ -44,9 +45,11 @@ interface SmokeLogCardProps {
     user_has_liked: boolean;
   };
   onLikeToggle: (logId: string, currentlyLiked: boolean) => void;
+  isSaved?: boolean;
+  onSaveToggle?: (cigarId: string) => void;
 }
 
-export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
+export function SmokeLogCard({ log, onLikeToggle, isSaved = false, onSaveToggle }: SmokeLogCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLiking, setIsLiking] = useState(false);
@@ -54,6 +57,18 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [localCommentsCount, setLocalCommentsCount] = useState(log.comments_count);
   const [showSmokeEffect, setShowSmokeEffect] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!user) {
+      handleAuthRequired();
+      return;
+    }
+    if (isSaving || !onSaveToggle) return;
+    setIsSaving(true);
+    await onSaveToggle(log.cigar.id);
+    setIsSaving(false);
+  };
   const handleAuthRequired = () => {
     toast.error("Please sign in to interact", {
       action: {
@@ -252,8 +267,20 @@ export function SmokeLogCard({ log, onLikeToggle }: SmokeLogCardProps) {
             </button>
           </div>
 
-          <button className="text-muted-foreground hover:text-primary transition-colors interactive">
-            <Bookmark className="h-5 w-5" />
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className={cn(
+              "transition-all duration-300 interactive",
+              isSaved 
+                ? "text-primary" 
+                : "text-muted-foreground hover:text-primary"
+            )}
+          >
+            <Bookmark className={cn(
+              "h-5 w-5 transition-all",
+              isSaved && "fill-primary"
+            )} />
           </button>
         </div>
       </div>

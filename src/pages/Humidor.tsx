@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import { LitMatchDisplay } from "@/components/LitMatchRating";
-import { Plus, Heart, Loader2 } from "lucide-react";
+import { Plus, Heart, Loader2, Flame } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -13,13 +13,13 @@ interface HumidorCigar {
   brand: string;
   line: string;
   vitola: string;
-  avg_score: number;
+  avg_score: number | null;
   logs_count: number;
-  last_smoked: string;
+  last_smoked: string | null;
   is_favorite: boolean;
 }
 
-type FilterType = "all" | "favorites";
+type FilterType = "all" | "favorites" | "wishlist";
 
 export default function Humidor() {
   const navigate = useNavigate();
@@ -41,6 +41,7 @@ export default function Humidor() {
     if (!user) return;
 
     try {
+      // Fetch smoke logs
       const { data: logs, error: logsError } = await supabase
         .from("smoke_logs")
         .select(`
@@ -54,9 +55,13 @@ export default function Humidor() {
 
       if (logsError) throw logsError;
 
+      // Fetch favorites
       const { data: favorites, error: favError } = await supabase
         .from("user_favorites")
-        .select("cigar_id")
+        .select(`
+          cigar_id,
+          cigars(brand, line, vitola)
+        `)
         .eq("user_id", user.id);
 
       if (favError) throw favError;
@@ -65,6 +70,7 @@ export default function Humidor() {
 
       const cigarMap = new Map<string, HumidorCigar>();
       
+      // Process smoke logs
       (logs || []).forEach((log) => {
         const cigar = log.cigars as { brand: string; line: string; vitola: string };
         if (!cigar) return;
@@ -73,7 +79,7 @@ export default function Humidor() {
         if (existing) {
           existing.logs_count += 1;
           existing.avg_score =
-            (existing.avg_score * (existing.logs_count - 1) + Number(log.overall_score)) /
+            ((existing.avg_score || 0) * (existing.logs_count - 1) + Number(log.overall_score)) /
             existing.logs_count;
         } else {
           cigarMap.set(log.cigar_id, {
@@ -86,6 +92,25 @@ export default function Humidor() {
             last_smoked: log.smoked_at,
             is_favorite: favoriteIds.has(log.cigar_id),
           });
+        }
+      });
+
+      // Add favorites that haven't been smoked yet (wishlist items)
+      (favorites || []).forEach((fav) => {
+        if (!cigarMap.has(fav.cigar_id)) {
+          const cigar = fav.cigars as { brand: string; line: string; vitola: string };
+          if (cigar) {
+            cigarMap.set(fav.cigar_id, {
+              cigar_id: fav.cigar_id,
+              brand: cigar.brand,
+              line: cigar.line,
+              vitola: cigar.vitola,
+              avg_score: null,
+              logs_count: 0,
+              last_smoked: null,
+              is_favorite: true,
+            });
+          }
         }
       });
 
@@ -119,8 +144,18 @@ export default function Humidor() {
     );
   };
 
-  const filteredCigars =
-    filter === "favorites" ? cigars.filter((c) => c.is_favorite) : cigars;
+  const filteredCigars = (() => {
+    switch (filter) {
+      case "favorites":
+        return cigars.filter((c) => c.is_favorite && c.logs_count > 0);
+      case "wishlist":
+        return cigars.filter((c) => c.is_favorite && c.logs_count === 0);
+      default:
+        return cigars;
+    }
+  })();
+
+  const wishlistCount = cigars.filter((c) => c.is_favorite && c.logs_count === 0).length;
 
   return (
     <AppLayout>
@@ -129,14 +164,14 @@ export default function Humidor() {
           My Humidor
         </h1>
 
-        {/* Premium pill toggle */}
+        {/* Premium pill toggle - 3 options now */}
         <div className="flex justify-start px-2">
           <div className="pill-toggle">
             <div 
               className="pill-toggle-indicator"
               style={{
-                left: filter === "all" ? "4px" : "calc(50%)",
-                width: "calc(50% - 4px)"
+                left: filter === "all" ? "4px" : filter === "favorites" ? "calc(33.33%)" : "calc(66.66%)",
+                width: "calc(33.33% - 4px)"
               }}
             />
             <button
@@ -155,7 +190,21 @@ export default function Humidor() {
                 filter === "favorites" && "active"
               )}
             >
-              Favorites
+              Smoked
+            </button>
+            <button
+              onClick={() => setFilter("wishlist")}
+              className={cn(
+                "pill-toggle-item relative",
+                filter === "wishlist" && "active"
+              )}
+            >
+              Wishlist
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -171,11 +220,13 @@ export default function Humidor() {
               <Heart className="h-10 w-10 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-display font-semibold text-foreground">
-              {filter === "favorites" ? "No favorites yet" : "Your humidor is empty"}
+              {filter === "favorites" ? "No favorites yet" : filter === "wishlist" ? "No wishlist items" : "Your humidor is empty"}
             </h3>
             <p className="mt-2 text-sm text-muted-foreground font-body max-w-[260px]">
               {filter === "favorites"
-                ? "Tap the heart on any cigar to add it here"
+                ? "Save cigars you've smoked to see them here"
+                : filter === "wishlist"
+                ? "Save cigars from search to add to your wishlist"
                 : "Start logging cigars to build your collection"}
             </p>
           </div>
@@ -184,27 +235,56 @@ export default function Humidor() {
             {filteredCigars.map((cigar, index) => (
               <div
                 key={cigar.cigar_id}
-                className="card-glass p-4 stagger-item"
+                className={cn(
+                  "card-glass p-4 stagger-item",
+                  cigar.logs_count === 0 && "border border-dashed border-primary/30"
+                )}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display text-xl font-semibold text-foreground leading-tight">
-                      {cigar.brand} {cigar.line}
-                    </h3>
+                  <div 
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => cigar.logs_count === 0 ? navigate(`/rate?cigarId=${cigar.cigar_id}`) : null}
+                  >
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-display text-xl font-semibold text-foreground leading-tight">
+                        {cigar.brand} {cigar.line}
+                      </h3>
+                      {cigar.logs_count === 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                          Want to try
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground font-body mt-0.5">
                       {cigar.vitola}
                     </p>
-                    <div className="mt-3">
-                      <LitMatchDisplay score={cigar.avg_score} size="sm" />
-                    </div>
-                    <p className="mt-3 text-xs text-muted-foreground font-body">
-                      {cigar.logs_count} log{cigar.logs_count !== 1 ? "s" : ""} •
-                      Last smoked{" "}
-                      {formatDistanceToNow(new Date(cigar.last_smoked), {
-                        addSuffix: true,
-                      })}
-                    </p>
+                    
+                    {cigar.logs_count > 0 ? (
+                      <>
+                        <div className="mt-3">
+                          <LitMatchDisplay score={cigar.avg_score} size="sm" />
+                        </div>
+                        <p className="mt-3 text-xs text-muted-foreground font-body">
+                          {cigar.logs_count} log{cigar.logs_count !== 1 ? "s" : ""} •
+                          Last smoked{" "}
+                          {cigar.last_smoked && formatDistanceToNow(new Date(cigar.last_smoked), {
+                            addSuffix: true,
+                          })}
+                        </p>
+                      </>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/rate?cigarId=${cigar.cigar_id}`);
+                        }}
+                        className="mt-3 flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
+                      >
+                        <Flame className="h-4 w-4" />
+                        Rate this cigar
+                      </button>
+                    )}
                   </div>
                   <button
                     onClick={() => toggleFavorite(cigar.cigar_id, cigar.is_favorite)}
