@@ -77,8 +77,39 @@ Deno.serve(async (req) => {
       failed: 0,
     };
 
+    // Patterns that indicate category/listing pages (not individual products)
+    const categoryPatterns = [
+      /\/cigars\/type\//,
+      /\/cigars\/country\//,
+      /\/cigars\/package\//,
+      /\/cigars\/shape\//,
+      /\/cigars\/strength\//,
+      /\/cigars\/brand$/,
+      /\/category\//,
+      /\/collections?\//,
+      /\/brands?\/?$/,
+      /-cigars$/,
+      /\/all-cigars/,
+    ];
+
     for (const item of queueItems) {
       try {
+        // Skip category/listing pages
+        const isCategory = categoryPatterns.some(pattern => pattern.test(item.source_url));
+        if (isCategory) {
+          console.log(`Skipping category page: ${item.source_url}`);
+          await supabase
+            .from('scrape_queue')
+            .update({
+              status: 'skipped',
+              error_message: 'Category/listing page, not a product',
+              processed_at: new Date().toISOString(),
+            })
+            .eq('id', item.id);
+          results.failed++;
+          continue;
+        }
+
         // Mark as processing
         await supabase
           .from('scrape_queue')
@@ -109,8 +140,8 @@ Deno.serve(async (req) => {
 
         const markdown = scrapeData.data?.markdown || scrapeData.markdown || '';
 
-        if (!markdown) {
-          throw new Error('No content scraped');
+        if (!markdown || markdown.length < 100) {
+          throw new Error('No content or too little content scraped');
         }
 
         // Extract cigar data using AI
@@ -152,16 +183,35 @@ Deno.serve(async (req) => {
 
         try {
           const content = aiData.choices?.[0]?.message?.content || '';
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) throw new Error('No JSON in response');
-          cigarData = JSON.parse(jsonMatch[0]);
+          console.log(`AI response preview: ${content.substring(0, 200)}`);
+          
+          // Try to extract JSON from the response
+          let jsonStr = content;
+          
+          // Remove markdown code blocks if present
+          const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if (codeBlockMatch) {
+            jsonStr = codeBlockMatch[1].trim();
+          } else {
+            // Try to find raw JSON object
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              jsonStr = jsonMatch[0];
+            }
+          }
+          
+          if (!jsonStr || !jsonStr.startsWith('{')) {
+            throw new Error(`No valid JSON found in: ${content.substring(0, 100)}`);
+          }
+          
+          cigarData = JSON.parse(jsonStr);
         } catch (parseError) {
           const parseErrorMsg = parseError instanceof Error ? parseError.message : 'Unknown parse error';
-          throw new Error(`Failed to parse AI response: ${parseErrorMsg}`);
+          throw new Error(`JSON parse failed: ${parseErrorMsg}`);
         }
 
         if (!cigarData.brand || !cigarData.line || !cigarData.vitola) {
-          throw new Error('Missing required fields (brand, line, vitola)');
+          throw new Error(`Missing required fields. Got: brand=${cigarData.brand}, line=${cigarData.line}, vitola=${cigarData.vitola}`);
         }
 
         // Check for duplicates
