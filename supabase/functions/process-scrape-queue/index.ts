@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { batchSize = 50, sourceName, continueInBackground = false } = await req.json().catch(() => ({}));
+    const { batchSize = 12, sourceName, continueInBackground = false } = await req.json().catch(() => ({}));
 
     // Get pending items from queue
     let query = supabase
@@ -337,7 +337,7 @@ Deno.serve(async (req) => {
               'Authorization': `Bearer ${supabaseServiceKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ batchSize: 50, continueInBackground: true }),
+            body: JSON.stringify({ batchSize: 12, continueInBackground: true }),
           });
         } catch (e) {
           console.error('Background trigger failed:', e);
