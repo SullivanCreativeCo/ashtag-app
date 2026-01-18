@@ -233,9 +233,12 @@ Deno.serve(async (req) => {
           throw new Error(`JSON parse failed: ${parseErrorMsg}`);
         }
 
-        if (!cigarData.brand || !cigarData.line || !cigarData.vitola) {
+        // brand + line are required; vitola can be unknown depending on retailer page structure
+        if (!cigarData.brand || !cigarData.line) {
           throw new Error(`Missing required fields. Got: brand=${cigarData.brand}, line=${cigarData.line}, vitola=${cigarData.vitola}`);
         }
+
+        cigarData.vitola = (cigarData.vitola && String(cigarData.vitola).trim()) || 'Unknown';
 
         // Check for duplicates
         const { data: existing } = await supabase
