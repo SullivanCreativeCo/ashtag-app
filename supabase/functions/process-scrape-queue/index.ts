@@ -15,6 +15,7 @@ interface CigarData {
   filler?: string;
   origin?: string;
   strength_profile?: string;
+  image_url?: string;
 }
 
 Deno.serve(async (req) => {
@@ -176,6 +177,7 @@ Deno.serve(async (req) => {
                 - filler: string (filler leaves)
                 - origin: string (country of origin)
                 - strength_profile: string (mild, medium, full, etc.)
+                - image_url: string (the main product image URL, must be a complete URL starting with http)
                 
                 Return ONLY valid JSON, no markdown or explanation. If a field is not found, omit it.`,
               },
@@ -278,6 +280,7 @@ Deno.serve(async (req) => {
               filler: cigarData.filler || null,
               origin: cigarData.origin || null,
               strength_profile: cigarData.strength_profile || null,
+              image_url: cigarData.image_url || null,
             })
             .select('id')
             .single();
