@@ -42,6 +42,8 @@ import {
   RefreshCw,
   Database,
   Zap,
+  Users,
+  Star,
 } from "lucide-react";
 
 interface Cigar {
@@ -133,6 +135,8 @@ export default function AdminBandImages() {
   const [bandImages, setBandImages] = useState<CigarBandImage[]>([]);
   const [cigars, setCigars] = useState<Cigar[]>([]);
   const [totalCigarsCount, setTotalCigarsCount] = useState(0);
+  const [totalUsersCount, setTotalUsersCount] = useState(0);
+  const [totalRatingsCount, setTotalRatingsCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCigars, setFilteredCigars] = useState<Cigar[]>([]);
   const [activeTab, setActiveTab] = useState("images");
@@ -222,35 +226,33 @@ export default function AdminBandImages() {
   const fetchData = async () => {
     setLoading(true);
 
-    // Get actual total count (not limited by default 1000)
-    const { count: totalCount } = await supabase
-      .from("cigars")
-      .select("*", { count: "exact", head: true });
+    // Fetch all counts in parallel
+    const [cigarsCountResult, usersCountResult, ratingsCountResult, cigarsDataResult, imagesDataResult] = await Promise.all([
+      supabase.from("cigars").select("*", { count: "exact", head: true }),
+      supabase.from("profiles").select("*", { count: "exact", head: true }),
+      supabase.from("smoke_logs").select("*", { count: "exact", head: true }),
+      supabase.from("cigars").select("id, brand, line, vitola").order("brand").limit(1000),
+      supabase.from("cigar_band_images").select(`*, cigar:cigars(id, brand, line, vitola)`).order("created_at", { ascending: false }),
+    ]);
 
-    if (totalCount !== null) {
-      setTotalCigarsCount(totalCount);
+    if (cigarsCountResult.count !== null) {
+      setTotalCigarsCount(cigarsCountResult.count);
     }
 
-    const { data: cigarsData } = await supabase
-      .from("cigars")
-      .select("id, brand, line, vitola")
-      .order("brand")
-      .limit(1000);
-
-    if (cigarsData) {
-      setCigars(cigarsData);
+    if (usersCountResult.count !== null) {
+      setTotalUsersCount(usersCountResult.count);
     }
 
-    const { data: imagesData } = await supabase
-      .from("cigar_band_images")
-      .select(`
-        *,
-        cigar:cigars(id, brand, line, vitola)
-      `)
-      .order("created_at", { ascending: false });
+    if (ratingsCountResult.count !== null) {
+      setTotalRatingsCount(ratingsCountResult.count);
+    }
 
-    if (imagesData) {
-      setBandImages(imagesData as CigarBandImage[]);
+    if (cigarsDataResult.data) {
+      setCigars(cigarsDataResult.data);
+    }
+
+    if (imagesDataResult.data) {
+      setBandImages(imagesDataResult.data as CigarBandImage[]);
     }
 
     setLoading(false);
@@ -702,7 +704,7 @@ export default function AdminBandImages() {
           </button>
           <div className="flex-1">
             <h1 className="font-display text-xl font-bold text-foreground">
-              Admin Panel
+              Admin
             </h1>
             <p className="text-xs text-muted-foreground">
               Manage cigars, images, and requests
@@ -844,18 +846,41 @@ export default function AdminBandImages() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-5 gap-2">
           <div className="card-elevated p-3 text-center">
-            <p className="text-2xl font-bold text-primary">{totalCigarsCount.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">Total Cigars</p>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Users className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <p className="text-xl font-bold text-primary">{totalUsersCount.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">Users</p>
           </div>
           <div className="card-elevated p-3 text-center">
-            <p className="text-2xl font-bold text-primary">{bandImages.length}</p>
-            <p className="text-xs text-muted-foreground">Band Images</p>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Star className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <p className="text-xl font-bold text-primary">{totalRatingsCount.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">Ratings</p>
           </div>
           <div className="card-elevated p-3 text-center">
-            <p className="text-2xl font-bold text-primary">{pendingRequestsCount}</p>
-            <p className="text-xs text-muted-foreground">Pending</p>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Cigarette className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <p className="text-xl font-bold text-primary">{totalCigarsCount.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground">Cigars</p>
+          </div>
+          <div className="card-elevated p-3 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <p className="text-xl font-bold text-primary">{bandImages.length}</p>
+            <p className="text-[10px] text-muted-foreground">Bands</p>
+          </div>
+          <div className="card-elevated p-3 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <p className="text-xl font-bold text-primary">{pendingRequestsCount}</p>
+            <p className="text-[10px] text-muted-foreground">Pending</p>
           </div>
         </div>
 

@@ -10,7 +10,7 @@ import Rate from "./pages/Rate";
 import Humidor from "./pages/Humidor";
 import NearMe from "./pages/NearMe";
 import MatchCigar from "./pages/MatchCigar";
-import AdminBandImages from "./pages/AdminBandImages";
+import Admin from "./pages/Admin";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
 import TermsOfService from "./pages/TermsOfService";
@@ -35,7 +35,7 @@ const App = () => (
             <Route path="/humidor" element={<Humidor />} />
             <Route path="/near-me" element={<NearMe />} />
             <Route path="/profile/:userId" element={<Profile />} />
-            <Route path="/admin/band-images" element={<AdminBandImages />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/install" element={<Install />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
