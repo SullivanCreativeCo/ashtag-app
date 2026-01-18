@@ -253,7 +253,7 @@ export default function Club() {
                       id="loungeLocation"
                       value={loungeLocation}
                       onChange={(e) => setLoungeLocation(e.target.value)}
-                      placeholder="New York, NY"
+                      placeholder="Greenville, SC"
                       className="mt-1"
                       required
                     />
