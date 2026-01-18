@@ -35,6 +35,13 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!lovableApiKey) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'AI key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { batchSize = 5, sourceName } = await req.json().catch(() => ({}));
@@ -170,27 +177,40 @@ Deno.serve(async (req) => {
                 - origin: string (country of origin)
                 - strength_profile: string (mild, medium, full, etc.)
                 
-                Return ONLY valid JSON, no markdown or explanation. If a field is not found, omit it.`
+                Return ONLY valid JSON, no markdown or explanation. If a field is not found, omit it.`,
               },
               {
                 role: 'user',
-                content: `Extract cigar data from this content:\n\n${markdown.substring(0, 8000)}`
-              }
+                content: `Extract cigar data from this content:\n\n${markdown.substring(0, 8000)}`,
+              },
             ],
             max_tokens: 1000,
           }),
         });
 
-        const aiData = await aiResponse.json();
+        const aiRaw = await aiResponse.text();
+
+        if (!aiResponse.ok) {
+          throw new Error(`AI request failed (${aiResponse.status}): ${aiRaw.substring(0, 200)}`);
+        }
+
+        // Parse chat-completions response JSON safely (avoid crashing on non-JSON responses)
+        let aiData: any;
+        try {
+          aiData = JSON.parse(aiRaw);
+        } catch {
+          throw new Error(`AI returned non-JSON response: ${aiRaw.substring(0, 200)}`);
+        }
+
         let cigarData: CigarData;
 
         try {
           const content = aiData.choices?.[0]?.message?.content || '';
           console.log(`AI response preview: ${content.substring(0, 200)}`);
-          
+
           // Try to extract JSON from the response
           let jsonStr = content;
-          
+
           // Remove markdown code blocks if present
           const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
           if (codeBlockMatch) {
@@ -202,11 +222,11 @@ Deno.serve(async (req) => {
               jsonStr = jsonMatch[0];
             }
           }
-          
-          if (!jsonStr || !jsonStr.startsWith('{')) {
-            throw new Error(`No valid JSON found in: ${content.substring(0, 100)}`);
+
+          if (!jsonStr || !jsonStr.trim().startsWith('{')) {
+            throw new Error(`No valid JSON found in: ${content.substring(0, 120)}`);
           }
-          
+
           cigarData = JSON.parse(jsonStr);
         } catch (parseError) {
           const parseErrorMsg = parseError instanceof Error ? parseError.message : 'Unknown parse error';
