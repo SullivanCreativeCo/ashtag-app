@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { batchSize = 5, sourceName } = await req.json().catch(() => ({}));
+    const { batchSize = 50, sourceName, continueInBackground = false } = await req.json().catch(() => ({}));
 
     // Get pending items from queue
     let query = supabase
@@ -320,8 +320,31 @@ Deno.serve(async (req) => {
         results.failed++;
       }
 
-      // Small delay between requests to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Reduced delay for faster processing (500ms instead of 1000ms)
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // If continueInBackground is set, trigger another batch after this one completes
+    if (continueInBackground && results.processed > 0) {
+      // Use waitUntil for background continuation (declare for Deno)
+      const triggerNextBatch = async () => {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Brief pause before next batch
+          console.log('Triggering next batch in background...');
+          await fetch(`${supabaseUrl}/functions/v1/process-scrape-queue`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ batchSize: 50, continueInBackground: true }),
+          });
+        } catch (e) {
+          console.error('Background trigger failed:', e);
+        }
+      };
+      // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+      (globalThis as any).EdgeRuntime?.waitUntil?.(triggerNextBatch()) || triggerNextBatch();
     }
 
     // Update source stats

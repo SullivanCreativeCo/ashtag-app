@@ -41,6 +41,7 @@ import {
   Play,
   RefreshCw,
   Database,
+  Zap,
 } from "lucide-react";
 
 interface Cigar {
@@ -339,21 +340,28 @@ export default function AdminBandImages() {
     }
   };
 
-  const handleProcessQueue = async (batchSize = 5) => {
+  const handleProcessQueue = async (batchSize = 50, continueInBackground = false) => {
     setProcessingQueue(true);
 
     try {
       const { data, error } = await supabase.functions.invoke("process-scrape-queue", {
-        body: { batchSize },
+        body: { batchSize, continueInBackground },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: "Batch processed!",
-        description: `Processed ${data.processed} items: ${data.inserted} inserted, ${data.duplicates} duplicates, ${data.failed} failed.`,
-      });
+      if (continueInBackground) {
+        toast({
+          title: "Bulk processing started!",
+          description: `First batch: ${data.processed} items. Processing will continue in the background. Refresh to see progress.`,
+        });
+      } else {
+        toast({
+          title: "Batch processed!",
+          description: `Processed ${data.processed} items: ${data.inserted} inserted, ${data.duplicates} duplicates, ${data.failed} failed.`,
+        });
+      }
 
       fetchData();
       fetchQueueStats();
@@ -1131,32 +1139,35 @@ export default function AdminBandImages() {
                 Process {queueStats.pending} pending URLs in the queue. Each batch scrapes and imports cigars automatically.
               </p>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
-                  onClick={() => handleProcessQueue(5)}
+                  onClick={() => handleProcessQueue(50, true)}
                   disabled={processingQueue || queueStats.pending === 0}
                   className="flex-1"
                 >
                   {processingQueue ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
+                      Starting...
                     </>
                   ) : (
                     <>
-                      <Play className="mr-2 h-4 w-4" />
-                      Process 5
+                      <Zap className="mr-2 h-4 w-4" />
+                      Process All ({queueStats.pending.toLocaleString()})
                     </>
                   )}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => handleProcessQueue(10)}
+                  onClick={() => handleProcessQueue(50)}
                   disabled={processingQueue || queueStats.pending === 0}
                 >
-                  Process 10
+                  Process 50
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                "Process All" will continue in the background until complete. Refresh to see progress.
+              </p>
             </div>
 
             {/* Data Sources */}
