@@ -131,6 +131,7 @@ export default function AdminBandImages() {
   const [uploading, setUploading] = useState(false);
   const [bandImages, setBandImages] = useState<CigarBandImage[]>([]);
   const [cigars, setCigars] = useState<Cigar[]>([]);
+  const [totalCigarsCount, setTotalCigarsCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredCigars, setFilteredCigars] = useState<Cigar[]>([]);
   const [activeTab, setActiveTab] = useState("images");
@@ -220,10 +221,20 @@ export default function AdminBandImages() {
   const fetchData = async () => {
     setLoading(true);
 
+    // Get actual total count (not limited by default 1000)
+    const { count: totalCount } = await supabase
+      .from("cigars")
+      .select("*", { count: "exact", head: true });
+
+    if (totalCount !== null) {
+      setTotalCigarsCount(totalCount);
+    }
+
     const { data: cigarsData } = await supabase
       .from("cigars")
       .select("id, brand, line, vitola")
-      .order("brand");
+      .order("brand")
+      .limit(1000);
 
     if (cigarsData) {
       setCigars(cigarsData);
@@ -827,7 +838,7 @@ export default function AdminBandImages() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <div className="card-elevated p-3 text-center">
-            <p className="text-2xl font-bold text-primary">{cigars.length}</p>
+            <p className="text-2xl font-bold text-primary">{totalCigarsCount.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground">Total Cigars</p>
           </div>
           <div className="card-elevated p-3 text-center">
