@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFriendships } from "@/hooks/useFriendships";
+import { useFavorites } from "@/hooks/useFavorites";
 import { AppLayout } from "@/components/AppLayout";
 import { SmokeLogCard } from "@/components/SmokeLogCard";
 import { StickPickOfWeek } from "@/components/StickPickOfWeek";
@@ -48,10 +49,17 @@ export default function Feed() {
   const location = useLocation();
   const { user } = useAuth();
   const { pendingRequests, getFriendIds } = useFriendships();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [logs, setLogs] = useState<SmokeLogWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
+
+  const handleSaveToggle = async (cigarId: string) => {
+    const log = logs.find(l => l.cigar.id === cigarId);
+    const cigarName = log ? `${log.cigar.brand} ${log.cigar.line}` : undefined;
+    await toggleFavorite(cigarId, cigarName);
+  };
 
   useEffect(() => {
     fetchLogs();
@@ -267,6 +275,8 @@ export default function Feed() {
                     key={log.id}
                     log={log}
                     onLikeToggle={handleLikeToggle}
+                    isSaved={isFavorite(log.cigar.id)}
+                    onSaveToggle={handleSaveToggle}
                   />
                 ))}
               </div>

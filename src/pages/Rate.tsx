@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useFavorites } from "@/hooks/useFavorites";
 import { AppLayout } from "@/components/AppLayout";
 import { LitMatchRating } from "@/components/LitMatchRating";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Plus, Loader2, ArrowLeft, Camera, X, ImagePlus } from "lucide-react";
+import { Search, Plus, Loader2, ArrowLeft, Camera, X, ImagePlus, Bookmark } from "lucide-react";
 import { CameraCapture } from "@/components/CameraCapture";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface Cigar {
   id: string;
@@ -51,6 +53,7 @@ export default function Rate() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const locationState = location.state as LocationState | null;
   const capturedImage = locationState?.capturedImage || null;
@@ -69,6 +72,7 @@ export default function Rate() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingPreselected, setLoadingPreselected] = useState(!!preselectedCigarId);
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
 
   // Log form state
   const [construction, setConstruction] = useState(3);
@@ -86,6 +90,11 @@ export default function Rate() {
   // Rating history state
   const [ratingHistory, setRatingHistory] = useState<RatingHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+
+  const handleFavoriteFromSearch = async (e: React.MouseEvent, cigar: Cigar) => {
+    e.stopPropagation();
+    await toggleFavorite(cigar.id, `${cigar.brand} ${cigar.line}`);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -311,7 +320,13 @@ export default function Rate() {
         title: "Logged!",
         description: "Your smoke log has been saved.",
       });
-      navigate("/feed", { state: { highlightLogId: inserted?.id } });
+      
+      // Check if cigar is already favorited, if not show prompt
+      if (selectedCigar && !isFavorite(selectedCigar.id)) {
+        setShowSavePrompt(true);
+      } else {
+        navigate("/feed", { state: { highlightLogId: inserted?.id } });
+      }
     }
 
     setSaving(false);
@@ -414,20 +429,39 @@ export default function Rate() {
               {!loading && cigars.length > 0 && (
                 <div className="space-y-2">
                   {cigars.map((cigar) => (
-                    <button
+                    <div
                       key={cigar.id}
-                      onClick={() => handleSelectCigar(cigar)}
-                      className="w-full rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary"
+                      className="flex items-center gap-2 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary"
                     >
-                      <h3 className="font-display font-semibold text-foreground">
-                        {cigar.brand} {cigar.line}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {cigar.vitola}
-                        {cigar.wrapper && ` • ${cigar.wrapper}`}
-                        {cigar.strength_profile && ` • ${cigar.strength_profile}`}
-                      </p>
-                    </button>
+                      <button
+                        onClick={() => handleSelectCigar(cigar)}
+                        className="flex-1 text-left"
+                      >
+                        <h3 className="font-display font-semibold text-foreground">
+                          {cigar.brand} {cigar.line}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {cigar.vitola}
+                          {cigar.wrapper && ` • ${cigar.wrapper}`}
+                          {cigar.strength_profile && ` • ${cigar.strength_profile}`}
+                        </p>
+                      </button>
+                      <button
+                        onClick={(e) => handleFavoriteFromSearch(e, cigar)}
+                        className={cn(
+                          "p-2 rounded-full transition-all duration-300",
+                          isFavorite(cigar.id)
+                            ? "text-primary"
+                            : "text-muted-foreground hover:text-primary"
+                        )}
+                        aria-label={isFavorite(cigar.id) ? "Remove from humidor" : "Save to humidor"}
+                      >
+                        <Bookmark className={cn(
+                          "h-5 w-5 transition-all",
+                          isFavorite(cigar.id) && "fill-primary"
+                        )} />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -668,6 +702,49 @@ export default function Rate() {
         onClose={() => setShowCamera(false)}
         onCapture={handleCameraCapture}
       />
+
+      {/* Save to Humidor Prompt */}
+      {showSavePrompt && selectedCigar && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in p-4">
+          <div className="card-glass max-w-sm w-full p-6 space-y-5 animate-scale-in">
+            <div className="text-center space-y-2">
+              <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                <Bookmark className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="font-display text-xl font-semibold text-foreground">
+                Save to Humidor?
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Add <span className="text-foreground font-medium">{selectedCigar.brand} {selectedCigar.line}</span> to your collection for easy access later.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowSavePrompt(false);
+                  navigate("/feed");
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                className="flex-1 gap-2"
+                onClick={async () => {
+                  await toggleFavorite(selectedCigar.id, `${selectedCigar.brand} ${selectedCigar.line}`);
+                  setShowSavePrompt(false);
+                  navigate("/feed");
+                }}
+              >
+                <Bookmark className="h-4 w-4" />
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 }
