@@ -32,11 +32,11 @@ type DemoView = "locked" | "member" | "admin";
 
 // Mock data for demo
 const mockLounge = {
-  name: "The Grand Havana Room",
+  name: "Social Cigar Lounge",
   logo: null,
   memberSince: "January 2024",
   membershipExpires: "January 2025",
-  memberNumber: "GHR-2847",
+  memberNumber: "SCL-2847",
 };
 
 const mockDeals = [
@@ -240,7 +240,7 @@ export default function Club() {
                       id="loungeName"
                       value={loungeName}
                       onChange={(e) => setLoungeName(e.target.value)}
-                      placeholder="The Grand Havana Room"
+                      placeholder="Social Cigar Lounge"
                       className="mt-1"
                       required
                     />
