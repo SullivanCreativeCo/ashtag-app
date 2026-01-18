@@ -10,6 +10,7 @@ import Rate from "./pages/Rate";
 import Humidor from "./pages/Humidor";
 import NearMe from "./pages/NearMe";
 import MatchCigar from "./pages/MatchCigar";
+import Club from "./pages/Club";
 import Admin from "./pages/Admin";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/rate" element={<Rate />} />
             <Route path="/match-cigar" element={<MatchCigar />} />
             <Route path="/humidor" element={<Humidor />} />
+            <Route path="/club" element={<Club />} />
             <Route path="/near-me" element={<NearMe />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
