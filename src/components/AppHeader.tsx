@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut, ImageIcon } from "lucide-react";
+import { User, LogOut, ImageIcon, Users } from "lucide-react";
 import ashtagLogo from "@/assets/ashtag-logo-new.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePresence } from "@/hooks/usePresence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -12,10 +13,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function AppHeader() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { onlineCount, onlineUsers, isConnected } = usePresence();
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -57,8 +65,36 @@ export function AppHeader() {
           />
         </button>
 
-        {/* Profile / Auth */}
-        {user ? (
+        {/* Admin online users indicator + Profile / Auth */}
+        <div className="flex items-center gap-3">
+          {isAdmin && isConnected && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1.5 rounded-full bg-charcoal-light/50 px-2.5 py-1">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-foreground">{onlineCount}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <p className="font-medium mb-1">{onlineCount} user{onlineCount !== 1 ? 's' : ''} online</p>
+                  <ul className="text-xs text-muted-foreground space-y-0.5">
+                    {onlineUsers.slice(0, 5).map((u) => (
+                      <li key={u.user_id}>
+                        {u.display_name || u.email || 'Anonymous'} - {u.current_page || '/'}
+                      </li>
+                    ))}
+                    {onlineUsers.length > 5 && (
+                      <li>+{onlineUsers.length - 5} more...</li>
+                    )}
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
+          {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center outline-none transition-all duration-200 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-full">
@@ -100,6 +136,7 @@ export function AppHeader() {
             Sign in
           </button>
         )}
+        </div>
       </div>
     </header>
   );
