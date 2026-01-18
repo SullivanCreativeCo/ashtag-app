@@ -164,49 +164,46 @@ export default function Humidor() {
           My Humidor
         </h1>
 
-        {/* Premium pill toggle - 3 options now */}
-        <div className="flex justify-start px-2">
-          <div className="pill-toggle">
-            <div 
-              className="pill-toggle-indicator"
-              style={{
-                left: filter === "all" ? "4px" : filter === "favorites" ? "calc(33.33%)" : "calc(66.66%)",
-                width: "calc(33.33% - 4px)"
-              }}
-            />
-            <button
-              onClick={() => setFilter("all")}
-              className={cn(
-                "pill-toggle-item",
-                filter === "all" && "active"
-              )}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter("favorites")}
-              className={cn(
-                "pill-toggle-item",
-                filter === "favorites" && "active"
-              )}
-            >
-              Smoked
-            </button>
-            <button
-              onClick={() => setFilter("wishlist")}
-              className={cn(
-                "pill-toggle-item relative",
-                filter === "wishlist" && "active"
-              )}
-            >
-              Wishlist
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
-                  {wishlistCount}
-                </span>
-              )}
-            </button>
-          </div>
+        {/* Tab toggle */}
+        <div className="flex gap-6 px-4">
+          <button
+            onClick={() => setFilter("all")}
+            className={cn(
+              "text-sm font-medium transition-colors duration-200",
+              filter === "all" 
+                ? "text-primary" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilter("favorites")}
+            className={cn(
+              "text-sm font-medium transition-colors duration-200",
+              filter === "favorites" 
+                ? "text-primary" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Smoked
+          </button>
+          <button
+            onClick={() => setFilter("wishlist")}
+            className={cn(
+              "relative text-sm font-medium transition-colors duration-200",
+              filter === "wishlist" 
+                ? "text-primary" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Wishlist
+            {wishlistCount > 0 && (
+              <span className="absolute -top-2 -right-4 w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
+                {wishlistCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Cigars list */}
