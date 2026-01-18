@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Flame, DoorOpen, MapPin, Cigarette } from "lucide-react";
+import { Flame, DoorOpen, MapPin, Cigarette, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -17,6 +17,11 @@ const navItems = [
     label: "Save",
     icon: DoorOpen,
     path: "/humidor",
+  },
+  {
+    label: "Club",
+    icon: Crown,
+    path: "/club",
   },
   {
     label: "Map",
