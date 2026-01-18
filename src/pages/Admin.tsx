@@ -193,6 +193,14 @@ export default function AdminBandImages() {
       fetchCigarRequests();
       fetchScrapeSources();
       fetchQueueStats();
+
+      // Auto-refresh stats every 2 minutes during scraping
+      const refreshInterval = setInterval(() => {
+        fetchData();
+        fetchQueueStats();
+      }, 2 * 60 * 1000);
+
+      return () => clearInterval(refreshInterval);
     }
   }, [isAdmin]);
 
