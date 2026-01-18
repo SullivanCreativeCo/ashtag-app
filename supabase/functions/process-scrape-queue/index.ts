@@ -78,18 +78,21 @@ Deno.serve(async (req) => {
     };
 
     // Patterns that indicate category/listing pages (not individual products)
+    // These match ONLY if the URL ends with the category pattern (no product after it)
     const categoryPatterns = [
-      /\/cigars\/type\//,
-      /\/cigars\/country\//,
-      /\/cigars\/package\//,
-      /\/cigars\/shape\//,
-      /\/cigars\/strength\//,
+      /\/cigars\/type\/[^\/]+$/,           // /cigars/type/machine-made-cigars (no product after)
+      /\/cigars\/country\/[^\/]+$/,        // /cigars/country/nicaraguan-cigars (no product after)
+      /\/cigars\/package\/[^\/]+$/,        // /cigars/package/10-pack-cigars (no product after)
+      /\/cigars\/shape\/[^\/]+$/,
+      /\/cigars\/strength\/[^\/]+$/,       // /cigars/strength/mild-cigars (no product after)
       /\/cigars\/brand$/,
-      /\/category\//,
-      /\/collections?\//,
+      /\/category\/[^\/]*$/,
+      /\/collections?\/[^\/]*$/,
       /\/brands?\/?$/,
-      /-cigars$/,
-      /\/all-cigars/,
+      /\/all-cigars\/?$/,
+      /\/cigars\.html$/,                   // Holts category pages
+      /\/samplers\.html$/,
+      /\/accessories\.html$/,
     ];
 
     for (const item of queueItems) {
