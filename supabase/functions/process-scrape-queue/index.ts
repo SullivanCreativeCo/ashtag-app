@@ -233,11 +233,13 @@ Deno.serve(async (req) => {
           throw new Error(`JSON parse failed: ${parseErrorMsg}`);
         }
 
-        // brand + line are required; vitola can be unknown depending on retailer page structure
-        if (!cigarData.brand || !cigarData.line) {
-          throw new Error(`Missing required fields. Got: brand=${cigarData.brand}, line=${cigarData.line}, vitola=${cigarData.vitola}`);
+        // brand is required; line/vitola can fallback
+        if (!cigarData.brand) {
+          throw new Error(`Missing brand. Got: brand=${cigarData.brand}, line=${cigarData.line}, vitola=${cigarData.vitola}`);
         }
 
+        // Fallback: use vitola as line if line is missing, or use brand
+        cigarData.line = (cigarData.line && String(cigarData.line).trim()) || cigarData.vitola || cigarData.brand;
         cigarData.vitola = (cigarData.vitola && String(cigarData.vitola).trim()) || 'Unknown';
 
         // Check for duplicates
