@@ -11,6 +11,7 @@ import { NewCigarAdditions } from "@/components/NewCigarAdditions";
 import { CameraCapture } from "@/components/CameraCapture";
 import { FriendRequestBadge } from "@/components/FriendRequestBadge";
 import { FriendRequestsSheet } from "@/components/FriendRequestsSheet";
+import { BetaBanner } from "@/components/BetaBanner";
 import { Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -216,6 +217,9 @@ export default function Feed() {
             </div>
           )}
         </div>
+
+        {/* Beta Banner */}
+        <BetaBanner />
 
         {/* Stick Pick of the Week - only on Everyone tab */}
         {feedFilter === "all" && <StickPickOfWeek />}
