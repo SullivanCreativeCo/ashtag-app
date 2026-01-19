@@ -26,15 +26,15 @@ export function NewCigarAdditions() {
 
   const fetchApprovedCigars = async () => {
     try {
-      // Get approved requests from the last 30 days
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      // Only show cigars approved in the last 2 days
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
       const { data, error } = await supabase
         .from("cigar_requests")
         .select("id, requested_name, vitola, origin, wrapper, created_at, user_id")
         .eq("status", "approved")
-        .gte("created_at", thirtyDaysAgo.toISOString())
+        .gte("created_at", twoDaysAgo.toISOString())
         .order("created_at", { ascending: false })
         .limit(5);
 
