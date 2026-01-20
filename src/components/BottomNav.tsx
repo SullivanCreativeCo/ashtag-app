@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Flame, DoorOpen, MapPin, Cigarette, Crown } from "lucide-react";
+import { Flame, DoorOpen, Cigarette, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,11 +20,6 @@ const baseNavItems = [
     label: "Save",
     icon: DoorOpen,
     path: "/humidor",
-  },
-  {
-    label: "Map",
-    icon: MapPin,
-    path: "/near-me",
   },
 ];
 
@@ -55,7 +50,7 @@ export function BottomNav() {
 
   // Only show Club tab to admins
   const navItems = isAdmin 
-    ? [...baseNavItems.slice(0, 3), clubNavItem, baseNavItems[3]]
+    ? [...baseNavItems, clubNavItem]
     : baseNavItems;
   const location = useLocation();
   const navigate = useNavigate();

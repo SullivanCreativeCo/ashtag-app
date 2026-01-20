@@ -8,7 +8,6 @@ import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
 import Rate from "./pages/Rate";
 import Humidor from "./pages/Humidor";
-import NearMe from "./pages/NearMe";
 import MatchCigar from "./pages/MatchCigar";
 import Club from "./pages/Club";
 import Admin from "./pages/Admin";
@@ -35,7 +34,6 @@ const App = () => (
             <Route path="/match-cigar" element={<MatchCigar />} />
             <Route path="/humidor" element={<Humidor />} />
             <Route path="/club" element={<Club />} />
-            <Route path="/near-me" element={<NearMe />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/install" element={<Install />} />
