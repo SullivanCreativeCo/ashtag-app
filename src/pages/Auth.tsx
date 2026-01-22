@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { isNativeApp, handleNativeGoogleAuth, setupDeepLinkListener } from "@/lib/capacitor-auth";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -25,6 +26,16 @@ export default function Auth() {
       navigate("/feed");
     }
   }, [user, authLoading, navigate]);
+
+  // Set up deep link listener for native OAuth callbacks
+  useEffect(() => {
+    const cleanup = setupDeepLinkListener(() => {
+      // Auth callback received, the auth state change will handle navigation
+      setLoading(false);
+    });
+    
+    return cleanup;
+  }, []);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,14 +103,20 @@ export default function Auth() {
     
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/feed`,
-        },
-      });
-
-      if (error) throw error;
+      if (isNativeApp()) {
+        // Use native OAuth flow with Browser plugin
+        await handleNativeGoogleAuth();
+        // Don't set loading to false here - deep link listener will handle it
+      } else {
+        // Web OAuth flow
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: `${window.location.origin}/feed`,
+          },
+        });
+        if (error) throw error;
+      }
     } catch (error: any) {
       toast({
         title: "Error",
