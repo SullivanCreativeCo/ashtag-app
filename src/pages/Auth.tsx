@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -17,6 +18,7 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [ageVerified, setAgeVerified] = useState(false);
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -26,6 +28,16 @@ export default function Auth() {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!ageVerified) {
+      toast({
+        title: "Age Verification Required",
+        description: "You must confirm you are 21 years or older to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -69,6 +81,15 @@ export default function Auth() {
   };
 
   const handleGoogleAuth = async () => {
+    if (!ageVerified) {
+      toast({
+        title: "Age Verification Required",
+        description: "You must confirm you are 21 years or older to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -193,10 +214,25 @@ export default function Auth() {
               />
             </div>
 
+            <div className="flex items-start space-x-3 pt-2">
+              <Checkbox
+                id="ageVerification"
+                checked={ageVerified}
+                onCheckedChange={(checked) => setAgeVerified(checked === true)}
+                className="mt-0.5"
+              />
+              <Label 
+                htmlFor="ageVerification" 
+                className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
+              >
+                By checking this box, I certify that I am 21 years of age or older.
+              </Label>
+            </div>
+
             <Button
               type="submit"
               className="w-full bg-gradient-ember py-6 font-semibold shadow-ember"
-              disabled={loading}
+              disabled={loading || !ageVerified}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLogin ? "Sign In" : "Create Account"}
