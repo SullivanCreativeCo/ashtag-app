@@ -311,6 +311,16 @@
     transform: scale(0.98);
   }
 
+  /* Ember gradient button - gold primary action button */
+  .bg-gradient-ember {
+    background: linear-gradient(135deg, hsl(38 70% 57%), hsl(32 65% 48%)) !important;
+  }
+
+  .shadow-ember {
+    box-shadow: 0 8px 32px -8px hsl(38 70% 50% / 0.5),
+                0 4px 12px -2px hsl(0 0% 0% / 0.3) !important;
+  }
+
   /* Header blur */
   .header-blur {
     background: hsl(20 8% 4% / 0.9);
