@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { StartupDiagnostics } from "@/components/StartupDiagnostics";
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
 import Rate from "./pages/Rate";
@@ -21,29 +22,31 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/feed" replace />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/feed" element={<Feed />} />
-            <Route path="/rate" element={<Rate />} />
-            <Route path="/match-cigar" element={<MatchCigar />} />
-            <Route path="/humidor" element={<Humidor />} />
-            <Route path="/club" element={<Club />} />
-            <Route path="/profile/:userId" element={<Profile />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/install" element={<Install />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+    <StartupDiagnostics>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Navigate to="/feed" replace />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/rate" element={<Rate />} />
+              <Route path="/match-cigar" element={<MatchCigar />} />
+              <Route path="/humidor" element={<Humidor />} />
+              <Route path="/club" element={<Club />} />
+              <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/install" element={<Install />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </StartupDiagnostics>
   </QueryClientProvider>
 );
 
