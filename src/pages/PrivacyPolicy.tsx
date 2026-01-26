@@ -75,14 +75,14 @@ const PrivacyPolicy = () => {
             <li>Opt out of non-essential communications</li>
           </ul>
           <p className="text-muted-foreground leading-relaxed">
-            To make a request, email <a href="mailto:apps@keegareauxlabs.com" className="text-primary hover:underline">apps@keegareauxlabs.com</a>.
+            To make a request, email <a href="mailto:keegan@sullivancreative.co" className="text-primary hover:underline">keegan@sullivancreative.co</a>.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold">Children's Privacy</h2>
+          <h2 className="text-lg font-semibold">Age Requirement</h2>
           <p className="text-muted-foreground leading-relaxed">
-            AshTag is not intended for users under the age of 13. We do not knowingly collect data from children.
+            AshTag is intended for users who are 21 years of age or older. We do not knowingly collect data from anyone under the age of 21.
           </p>
         </section>
 
