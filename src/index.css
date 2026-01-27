@@ -268,7 +268,9 @@
 
   /* Floating action button - premium gold */
   .fab {
-    @apply fixed bottom-28 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-xl;
+    @apply fixed right-5 z-50 flex h-14 w-14 items-center justify-center rounded-xl;
+    /* Position above bottom nav + safe area for native apps */
+    bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
     background: var(--gradient-gold);
     box-shadow: 
       var(--shadow-gold),
