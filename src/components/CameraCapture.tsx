@@ -21,6 +21,12 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
   const [isNative, setIsNative] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
+  // Reset transient state when opening/closing
+  useEffect(() => {
+    if (!isOpen) return;
+    setError(null);
+  }, [isOpen]);
+
   // Check if running on native platform
   useEffect(() => {
     setIsNative(Capacitor.isNativePlatform());
@@ -49,7 +55,11 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
       }
       
       console.log("Taking photo with Capacitor Camera...");
-      const image = await Camera.getPhoto({
+
+      // iOS can occasionally hang if the camera is launched outside a user gesture.
+      // Additionally, if the native UI fails to present, we don't want to stay stuck.
+      const image = await Promise.race([
+        Camera.getPhoto({
         quality: 70,
         allowEditing: false,
         resultType: CameraResultType.Base64,
@@ -57,7 +67,14 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
         width: 1024,
         height: 1024,
         correctOrientation: true,
-      });
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Camera timed out. Tap Open Camera to try again.")),
+            15000,
+          ),
+        ),
+      ]);
       
       if (image.base64String) {
         console.log("Photo captured successfully");
@@ -76,13 +93,6 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
       setIsCapturing(false);
     }
   }, [isCapturing]);
-
-  // Auto-trigger native camera when opened on native platform
-  useEffect(() => {
-    if (isOpen && isNative && !capturedImage && !isCapturing) {
-      captureWithNativeCamera();
-    }
-  }, [isOpen, isNative, capturedImage, captureWithNativeCamera, isCapturing]);
 
   // Web camera logic
   const startCamera = useCallback(async () => {
@@ -218,7 +228,7 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
 
   if (!isOpen) return null;
 
-  // Native platform: show simpler UI while waiting for native camera
+  // Native platform: require a user gesture to open the camera (more reliable on iOS)
   if (isNative && !capturedImage && !error) {
     return (
       <div 
@@ -237,20 +247,21 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
           </button>
         </div>
         
-        <Camera className="h-16 w-16 text-muted-foreground mb-4 animate-pulse" />
-        <p className="text-white/70 text-sm">
-          {isCapturing ? "Opening camera..." : "Tap to capture"}
-        </p>
-        
-        {!isCapturing && (
-          <Button
-            onClick={captureWithNativeCamera}
-            variant="outline"
-            className="mt-6"
-          >
-            Open Camera
-          </Button>
-        )}
+        <Camera className={cn("h-16 w-16 mb-4", isCapturing ? "animate-pulse" : "")} />
+        <p className="text-white/70 text-sm">{isCapturing ? "Opening camera..." : "Ready"}</p>
+
+        <Button
+          onClick={captureWithNativeCamera}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            captureWithNativeCamera();
+          }}
+          variant="outline"
+          className="mt-6 touch-manipulation"
+          disabled={isCapturing}
+        >
+          {isCapturing ? "Opening…" : "Open Camera"}
+        </Button>
       </div>
     );
   }
