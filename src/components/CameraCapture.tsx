@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { X, Camera, RotateCcw, Check, SwitchCamera, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Capacitor } from "@capacitor/core";
 
 interface CameraCaptureProps {
   isOpen: boolean;
@@ -17,8 +18,76 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNative, setIsNative] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
+  // Check if running on native platform
+  useEffect(() => {
+    setIsNative(Capacitor.isNativePlatform());
+  }, []);
+
+  // For native: use Capacitor Camera plugin
+  const captureWithNativeCamera = useCallback(async () => {
+    if (isCapturing) return;
+    setIsCapturing(true);
+    setError(null);
+    
+    try {
+      // Dynamically import to avoid issues on web
+      const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
+      
+      console.log("Requesting camera permission...");
+      
+      // Request permissions first
+      const permissions = await Camera.requestPermissions({ permissions: ["camera"] });
+      console.log("Camera permissions:", permissions);
+      
+      if (permissions.camera !== "granted") {
+        setError("Camera permission denied. Please enable camera access in Settings.");
+        setIsCapturing(false);
+        return;
+      }
+      
+      console.log("Taking photo with Capacitor Camera...");
+      const image = await Camera.getPhoto({
+        quality: 70,
+        allowEditing: false,
+        resultType: CameraResultType.Base64,
+        source: CameraSource.Camera,
+        width: 1024,
+        height: 1024,
+        correctOrientation: true,
+      });
+      
+      if (image.base64String) {
+        console.log("Photo captured successfully");
+        const imageData = `data:image/jpeg;base64,${image.base64String}`;
+        setCapturedImage(imageData);
+      }
+    } catch (err: any) {
+      console.error("Native camera error:", err);
+      // User cancelled is not an error
+      if (err?.message?.includes("cancelled") || err?.message?.includes("canceled")) {
+        console.log("User cancelled camera");
+      } else {
+        setError(err?.message || "Failed to access camera. Please check permissions in Settings.");
+      }
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [isCapturing]);
+
+  // Auto-trigger native camera when opened on native platform
+  useEffect(() => {
+    if (isOpen && isNative && !capturedImage && !isCapturing) {
+      captureWithNativeCamera();
+    }
+  }, [isOpen, isNative, capturedImage, captureWithNativeCamera, isCapturing]);
+
+  // Web camera logic
   const startCamera = useCallback(async () => {
+    if (isNative) return; // Don't use web camera on native
+    
     try {
       setError(null);
       
@@ -50,7 +119,7 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
       console.error("Camera error:", err);
       setError("Unable to access camera. Please ensure you've granted camera permissions.");
     }
-  }, [facingMode, stream]);
+  }, [facingMode, stream, isNative]);
 
   const stopCamera = useCallback(() => {
     if (stream) {
@@ -60,7 +129,7 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
   }, [stream]);
 
   useEffect(() => {
-    if (isOpen && !capturedImage) {
+    if (isOpen && !capturedImage && !isNative) {
       startCamera();
     }
     
@@ -70,7 +139,7 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
         setCapturedImage(null);
       }
     };
-  }, [isOpen, facingMode]);
+  }, [isOpen, facingMode, isNative]);
 
   useEffect(() => {
     return () => {
@@ -79,6 +148,11 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
   }, []);
 
   const handleCapture = () => {
+    if (isNative) {
+      captureWithNativeCamera();
+      return;
+    }
+    
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -115,7 +189,11 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
 
   const handleRetake = () => {
     setCapturedImage(null);
-    startCamera();
+    if (isNative) {
+      captureWithNativeCamera();
+    } else {
+      startCamera();
+    }
   };
 
   const handleConfirm = () => {
@@ -140,6 +218,43 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
 
   if (!isOpen) return null;
 
+  // Native platform: show simpler UI while waiting for native camera
+  if (isNative && !capturedImage && !error) {
+    return (
+      <div 
+        className={cn(
+          "fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center",
+          "animate-in fade-in duration-300"
+        )}
+      >
+        {/* Close button */}
+        <div className="absolute top-4 left-4 z-10 safe-top">
+          <button
+            onClick={handleClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 backdrop-blur-sm transition-transform active:scale-95"
+          >
+            <X className="h-5 w-5 text-white" />
+          </button>
+        </div>
+        
+        <Camera className="h-16 w-16 text-muted-foreground mb-4 animate-pulse" />
+        <p className="text-white/70 text-sm">
+          {isCapturing ? "Opening camera..." : "Tap to capture"}
+        </p>
+        
+        {!isCapturing && (
+          <Button
+            onClick={captureWithNativeCamera}
+            variant="outline"
+            className="mt-6"
+          >
+            Open Camera
+          </Button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div 
       className={cn(
@@ -158,7 +273,7 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
       </div>
 
       {/* Frame border around screen */}
-      {!capturedImage && !error && (
+      {!capturedImage && !error && !isNative && (
         <div className="absolute inset-4 z-10 pointer-events-none rounded-2xl border-2 border-white/30" />
       )}
 
@@ -170,7 +285,7 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
             <h2 className="text-display text-white text-xl mb-2">Camera Access Required</h2>
             <p className="text-muted-foreground text-sm">{error}</p>
             <Button
-              onClick={startCamera}
+              onClick={isNative ? captureWithNativeCamera : startCamera}
               variant="outline"
               className="mt-6"
             >
@@ -194,8 +309,8 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
         )}
       </div>
 
-      {/* Bottom capture button */}
-      {!capturedImage && !error && (
+      {/* Bottom capture button - only for web */}
+      {!capturedImage && !error && !isNative && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 safe-bottom">
           <button
             onClick={handleCapture}
@@ -218,8 +333,8 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
         </div>
       )}
 
-      {/* Switch camera button - bottom right when in capture mode */}
-      {!capturedImage && !error && hasMultipleCameras && (
+      {/* Switch camera button - bottom right when in capture mode (web only) */}
+      {!capturedImage && !error && hasMultipleCameras && !isNative && (
         <div className="absolute bottom-8 right-4 z-10 safe-bottom">
           <button
             onClick={handleSwitchCamera}
