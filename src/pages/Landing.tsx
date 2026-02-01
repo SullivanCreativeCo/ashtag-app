@@ -165,14 +165,14 @@ const Landing = () => {
       <section className="py-20 px-6 lg:px-12">
         <div className="container mx-auto max-w-4xl text-center space-y-8">
           <h2 className="font-display text-3xl md:text-4xl">
-            Trusted by <span className="text-primary">Cigar Enthusiasts</span>
+            Built for <span className="text-primary">Newcomers</span> and Seasoned Smokers Alike
           </h2>
           <p className="text-xl text-muted-foreground">
-            Join a Growing Community of Aficionados
+            Join the Community
           </p>
           
           <div className="flex flex-wrap justify-center gap-4 pt-4">
-            {["Premium Selection", "Community Driven", "AI-Powered", "Free to Use"].map((tag) => (
+            {["A Curated Collection", "Built by the Community", "Smart Recommendations"].map((tag) => (
               <div key={tag} className="badge-gold">
                 <Flame className="h-3 w-3" />
                 {tag}
@@ -187,17 +187,17 @@ const Landing = () => {
         <div className="container mx-auto max-w-4xl">
           <div className="card-cinematic p-8 md:p-12 text-center space-y-6 glow-gold">
             <h2 className="font-display text-3xl md:text-4xl">
-              Ready to Elevate Your Experience?
+              For the Ones Worth <span className="text-primary">Remembering</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              For the ones worth remembering. Start logging your smokes today.
+              Keep a record of every cigar you'd light again.
             </p>
             <Button 
               onClick={() => navigate("/feed")}
               size="lg"
               className="btn-glow text-primary-foreground font-semibold px-12"
             >
-              Get Started <ArrowRight className="ml-2 h-5 w-5" />
+              Log Your First Cigar <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>
