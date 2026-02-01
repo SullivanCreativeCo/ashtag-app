@@ -2,7 +2,11 @@
 
 import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
 import { supabase } from "../supabase/client";
-const lovableAuth = createLovableAuth({});
+// In some environments (Preview iframe / custom domains), the relative broker path
+// can 404. Use the hosted broker explicitly.
+const lovableAuth = createLovableAuth({
+  oauthBrokerUrl: "https://oauth.lovable.app/~oauth/initiate",
+});
 
 export const lovable = {
   auth: {
