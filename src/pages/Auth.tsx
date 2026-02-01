@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { isNativeApp, handleNativeGoogleAuth, setupDeepLinkListener } from "@/lib/capacitor-auth";
 import { setRememberDevicePreference } from "@/lib/session-storage";
+import { signInWithLovableOAuthPopup } from "@/lib/lovable-oauth";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -115,11 +116,10 @@ export default function Auth() {
         await handleNativeGoogleAuth();
         // Don't set loading to false here - deep link listener will handle it
       } else {
-        // Web OAuth flow via Lovable Cloud
-        const { error } = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: window.location.origin,
-        });
-        if (error) throw error;
+        // Web OAuth flow (popup/new tab) to avoid /~oauth/* 404s on custom domains
+        const result = await signInWithLovableOAuthPopup("google");
+        if (result.error) throw result.error;
+        await supabase.auth.setSession(result.tokens);
       }
     } catch (error: any) {
       toast({
@@ -145,10 +145,9 @@ export default function Auth() {
     setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("apple", {
-        redirect_uri: window.location.origin,
-      });
-      if (error) throw error;
+      const result = await signInWithLovableOAuthPopup("apple");
+      if (result.error) throw result.error;
+      await supabase.auth.setSession(result.tokens);
     } catch (error: any) {
       toast({
         title: "Error",
