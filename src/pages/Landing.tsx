@@ -119,8 +119,9 @@ const Landing = () => {
                   </div>
                 </div>
                 
-                {/* Glow effect */}
-                <div className="absolute inset-0 rounded-[40px] bg-primary/20 blur-3xl -z-10 opacity-30" />
+                {/* Glow effects */}
+                <div className="absolute -inset-8 rounded-full bg-primary/25 blur-3xl -z-10" />
+                <div className="absolute -inset-16 rounded-full bg-primary/15 blur-[80px] -z-20" />
               </div>
             </div>
           </div>
