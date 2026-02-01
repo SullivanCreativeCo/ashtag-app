@@ -110,11 +110,11 @@ const Landing = () => {
                 {/* Phone frame */}
                 <div className="relative rounded-[40px] border-[8px] border-charcoal-light bg-charcoal overflow-hidden shadow-float">
                   {/* Phone screen content - real screenshot */}
-                  <div className="aspect-[9/19.5] bg-background overflow-hidden">
+                  <div className="aspect-[9/19] bg-background overflow-hidden">
                     <img 
                       src={appScreenshot} 
                       alt="AshTag App Feed" 
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover object-top"
                     />
                   </div>
                 </div>
