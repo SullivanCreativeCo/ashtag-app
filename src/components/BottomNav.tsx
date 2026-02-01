@@ -67,7 +67,7 @@ export function BottomNav() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "nav-item flex-1",
+                "nav-item flex-1 touch-manipulation",
                 isActive && "active"
               )}
             >
@@ -85,7 +85,7 @@ export function BottomNav() {
               </div>
               <span
                 className={cn(
-                  "text-[10px] font-display font-semibold tracking-wider uppercase transition-all duration-300",
+                  "text-[10px] font-display font-semibold tracking-wider uppercase transition-all duration-300 select-none",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
               >

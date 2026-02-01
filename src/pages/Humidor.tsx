@@ -165,11 +165,11 @@ export default function Humidor() {
         </h1>
 
         {/* Tab toggle */}
-        <div className="flex gap-6 px-4">
+        <div className="flex gap-4 sm:gap-6 px-4 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setFilter("all")}
             className={cn(
-              "text-sm font-medium transition-colors duration-200",
+              "text-sm font-medium transition-colors duration-200 whitespace-nowrap touch-manipulation py-2",
               filter === "all" 
                 ? "text-primary" 
                 : "text-muted-foreground hover:text-foreground"
@@ -180,7 +180,7 @@ export default function Humidor() {
           <button
             onClick={() => setFilter("favorites")}
             className={cn(
-              "text-sm font-medium transition-colors duration-200",
+              "text-sm font-medium transition-colors duration-200 whitespace-nowrap touch-manipulation py-2",
               filter === "favorites" 
                 ? "text-primary" 
                 : "text-muted-foreground hover:text-foreground"
@@ -191,7 +191,7 @@ export default function Humidor() {
           <button
             onClick={() => setFilter("wishlist")}
             className={cn(
-              "relative text-sm font-medium transition-colors duration-200",
+              "relative text-sm font-medium transition-colors duration-200 whitespace-nowrap touch-manipulation py-2",
               filter === "wishlist" 
                 ? "text-primary" 
                 : "text-muted-foreground hover:text-foreground"
@@ -199,7 +199,7 @@ export default function Humidor() {
           >
             Wishlist
             {wishlistCount > 0 && (
-              <span className="absolute -top-2 -right-4 w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
+              <span className="absolute -top-1 -right-4 w-4 h-4 rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center">
                 {wishlistCount}
               </span>
             )}
@@ -286,7 +286,7 @@ export default function Humidor() {
                   <button
                     onClick={() => toggleFavorite(cigar.cigar_id, cigar.is_favorite)}
                     className={cn(
-                      "rounded-full p-2 transition-all duration-300 like-button",
+                      "rounded-full p-2 transition-all duration-300 like-button touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center",
                       cigar.is_favorite
                         ? "text-primary liked"
                         : "text-muted-foreground hover:text-primary"

@@ -232,7 +232,7 @@ export function SmokeLogCard({ log, onLikeToggle, isSaved = false, onSaveToggle 
               onClick={handleLike}
               disabled={isLiking}
               className={cn(
-                "like-button flex items-center gap-2 text-sm font-medium relative",
+                "like-button flex items-center gap-2 text-sm font-medium relative touch-manipulation min-h-[44px] min-w-[44px] justify-center",
                 log.user_has_liked
                   ? "text-primary liked"
                   : "text-muted-foreground hover:text-primary"
@@ -257,12 +257,12 @@ export function SmokeLogCard({ log, onLikeToggle, isSaved = false, onSaveToggle 
               <span className="tabular-nums">{log.likes_count}</span>
             </button>
 
-            <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground min-h-[44px] min-w-[44px] justify-center">
               <MessageCircle className="h-6 w-6" />
               <span className="tabular-nums">{localCommentsCount}</span>
             </span>
 
-            <button className="text-muted-foreground hover:text-foreground transition-colors interactive">
+            <button className="text-muted-foreground hover:text-foreground transition-colors interactive touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center">
               <Share2 className="h-5 w-5" />
             </button>
           </div>
@@ -271,7 +271,7 @@ export function SmokeLogCard({ log, onLikeToggle, isSaved = false, onSaveToggle 
             onClick={handleSave}
             disabled={isSaving}
             className={cn(
-              "transition-all duration-300 interactive",
+              "transition-all duration-300 interactive touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center",
               isSaved 
                 ? "text-primary" 
                 : "text-muted-foreground hover:text-primary"

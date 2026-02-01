@@ -119,7 +119,7 @@ export default function MatchCigar() {
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={handleClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-muted transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted transition-colors touch-manipulation"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>

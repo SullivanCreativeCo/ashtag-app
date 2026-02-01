@@ -599,4 +599,42 @@
   .duration-400 {
     transition-duration: 400ms;
   }
+
+  /* Mobile touch optimization */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Prevent text selection on mobile UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* Responsive text utilities */
+  .text-responsive-sm {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-base {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-lg {
+    @apply text-base sm:text-lg;
+  }
+
+  /* Mobile-optimized spacing */
+  .p-responsive {
+    @apply p-4 sm:p-6;
+  }
+
+  .px-responsive {
+    @apply px-4 sm:px-6;
+  }
+
+  .py-responsive {
+    @apply py-4 sm:py-6;
+  }
 }

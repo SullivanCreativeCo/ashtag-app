@@ -34,16 +34,16 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 header-blur border-b border-border/30">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="AshTag" className="h-10 w-auto" />
-            <span className="font-display text-xl text-primary">AshTag</span>
+      <header className="fixed top-0 left-0 right-0 z-50 header-blur border-b border-border/30 safe-top">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <img src={logo} alt="AshTag" className="h-8 sm:h-10 w-auto" />
+            <span className="font-display text-lg sm:text-xl text-primary">AshTag</span>
           </div>
           <Button 
             onClick={() => navigate("/feed")}
             variant="outline"
-            className="border-primary/30 text-primary hover:bg-primary/10"
+            className="border-primary/30 text-primary hover:bg-primary/10 text-sm sm:text-base px-3 sm:px-4 h-9 sm:h-10 touch-manipulation"
           >
             Sign In
           </Button>
@@ -51,37 +51,37 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6 lg:px-12">
+      <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-12">
         {/* Background glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
         
         <div className="container mx-auto max-w-6xl relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left content */}
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-                <span className="text-sm text-primary font-medium">Sign Up</span>
+            <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20">
+                <span className="text-xs sm:text-sm text-primary font-medium">Sign Up</span>
               </div>
 
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl leading-tight">
+              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight">
                 <span className="text-primary">AshTag.</span>
                 <br />
-                <span className="text-foreground text-2xl md:text-3xl lg:text-4xl">
+                <span className="text-foreground text-xl sm:text-2xl md:text-3xl lg:text-4xl">
                   Smoke It. Rate It. Share It. Remember It.
                 </span>
               </h1>
 
-              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+              <p className="text-base sm:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed">
                 Explore <span className="text-primary font-medium">500+ detailed cigar profiles</span>, 
                 track your humidor, and share reviews with fellow enthusiasts. 
                 Use the web app or download the free iOS app.
               </p>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col items-center lg:items-start gap-4">
                 <Button 
                   onClick={() => navigate("/feed")}
                   size="lg"
-                  className="btn-glow text-primary-foreground font-semibold px-8 w-fit"
+                  className="btn-glow text-primary-foreground font-semibold px-6 sm:px-8 w-full sm:w-auto touch-manipulation min-h-[48px]"
                 >
                   Use the Web App <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -105,8 +105,8 @@ const Landing = () => {
             </div>
 
             {/* Right - Phone mockup */}
-            <div className="relative flex justify-center lg:justify-end">
-              <div className="relative w-[280px] md:w-[320px]">
+            <div className="relative flex justify-center lg:justify-end mt-8 lg:mt-0">
+              <div className="relative w-[240px] sm:w-[280px] md:w-[320px]">
                 {/* Phone frame */}
                 <div className="relative rounded-[40px] border-[8px] border-charcoal-light bg-charcoal overflow-hidden shadow-float">
                   {/* Phone screen content - real screenshot */}
@@ -129,15 +129,15 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-6 lg:px-12">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-12">
         <div className="container mx-auto max-w-6xl">
-          <div className="card-glass p-8 md:p-12 space-y-12">
+          <div className="card-glass p-5 sm:p-8 md:p-12 space-y-8 sm:space-y-12">
             <div className="max-w-2xl">
-              <h2 className="font-display text-3xl md:text-4xl mb-4">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl mb-3 sm:mb-4">
                 Everything You Need to{" "}
                 <span className="text-primary">Elevate</span> Your Cigar Experience
               </h2>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-muted-foreground text-base sm:text-lg">
                 Discover cigars that match your taste, keep your collection organized, 
                 and see what the community is enjoying. AshTag keeps your cigar life in one place.
               </p>
@@ -145,13 +145,13 @@ const Landing = () => {
 
 
             {/* Feature cards */}
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               {features.map((feature) => (
-                <div key={feature.title} className="card-leather p-6 space-y-4 group hover:border-primary/30 transition-colors">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <feature.icon className="h-6 w-6 text-primary" />
+                <div key={feature.title} className="card-leather p-4 sm:p-6 space-y-3 sm:space-y-4 group hover:border-primary/30 transition-colors">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
-                  <h3 className="font-display text-xl">{feature.title}</h3>
+                  <h3 className="font-display text-lg sm:text-xl">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">
                     {feature.description}
                   </p>
@@ -163,18 +163,18 @@ const Landing = () => {
       </section>
 
       {/* Social Proof Section */}
-      <section className="py-20 px-6 lg:px-12">
-        <div className="container mx-auto max-w-4xl text-center space-y-8">
-          <h2 className="font-display text-3xl md:text-4xl">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-12">
+        <div className="container mx-auto max-w-4xl text-center space-y-6 sm:space-y-8">
+          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl px-2">
             Built for <span className="text-primary">Newcomers</span> and <span className="text-primary">Seasoned</span> Smokers Alike
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-lg sm:text-xl text-muted-foreground">
             Join the Community
           </p>
           
-          <div className="flex flex-wrap justify-center gap-4 pt-4">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 pt-2 sm:pt-4">
             {["A Curated Collection", "Built by the Community", "Smart Recommendations"].map((tag) => (
-              <div key={tag} className="badge-gold">
+              <div key={tag} className="badge-gold text-xs sm:text-sm">
                 <Flame className="h-3 w-3" />
                 {tag}
               </div>
@@ -184,19 +184,19 @@ const Landing = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6 lg:px-12">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-12">
         <div className="container mx-auto max-w-4xl">
-          <div className="card-cinematic p-8 md:p-12 text-center space-y-6 glow-gold">
-            <h2 className="font-display text-3xl md:text-4xl">
+          <div className="card-cinematic p-6 sm:p-8 md:p-12 text-center space-y-4 sm:space-y-6 glow-gold">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl">
               For the Ones Worth <span className="text-primary">Remembering</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
               Keep a record of every cigar you'd light again.
             </p>
             <Button 
               onClick={() => navigate("/feed")}
               size="lg"
-              className="btn-glow text-primary-foreground font-semibold px-12"
+              className="btn-glow text-primary-foreground font-semibold px-8 sm:px-12 w-full sm:w-auto touch-manipulation min-h-[48px]"
             >
               Log Your First Cigar <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
@@ -205,20 +205,20 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-border/30">
+      <footer className="py-8 sm:py-12 px-4 sm:px-6 border-t border-border/30">
         <div className="container mx-auto max-w-6xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="AshTag" className="h-8 w-auto" />
-              <span className="font-display text-lg text-primary">AshTag</span>
+          <div className="flex flex-col items-center gap-4 sm:gap-6 text-center md:flex-row md:justify-between md:text-left">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <img src={logo} alt="AshTag" className="h-6 sm:h-8 w-auto" />
+              <span className="font-display text-base sm:text-lg text-primary">AshTag</span>
             </div>
             
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a>
-              <a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
+            <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
+              <a href="/terms" className="hover:text-foreground transition-colors touch-manipulation py-2">Terms of Service</a>
+              <a href="/privacy" className="hover:text-foreground transition-colors touch-manipulation py-2">Privacy Policy</a>
             </div>
             
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               © {new Date().getFullYear()} AshTag. All rights reserved.
             </p>
           </div>
