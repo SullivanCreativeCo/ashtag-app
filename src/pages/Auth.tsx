@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { isNativeApp, handleNativeGoogleAuth, setupDeepLinkListener } from "@/lib/capacitor-auth";
+import { setRememberDevicePreference } from "@/lib/session-storage";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [ageVerified, setAgeVerified] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(true);
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -50,6 +52,8 @@ export default function Auth() {
       return;
     }
     
+    // Save the remember device preference before auth
+    setRememberDevicePreference(rememberDevice);
     setLoading(true);
 
     try {
@@ -102,6 +106,8 @@ export default function Auth() {
       return;
     }
     
+    // Save the remember device preference before auth
+    setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
       if (isNativeApp()) {
@@ -135,6 +141,8 @@ export default function Auth() {
       return;
     }
     
+    // Save the remember device preference before auth
+    setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth("apple", {
@@ -280,6 +288,20 @@ export default function Auth() {
                 className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
               >
                 By checking this box, I certify that I am 21 years of age or older.
+              </Label>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="rememberDevice"
+                checked={rememberDevice}
+                onCheckedChange={(checked) => setRememberDevice(checked === true)}
+              />
+              <Label 
+                htmlFor="rememberDevice" 
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                Remember this device
               </Label>
             </div>
 
