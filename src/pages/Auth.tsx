@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,14 +11,22 @@ import { Loader2 } from "lucide-react";
 import { isNativeApp, handleNativeGoogleAuth, setupDeepLinkListener } from "@/lib/capacitor-auth";
 import { setRememberDevicePreference } from "@/lib/session-storage";
 
-function isLovableHostedDomain(hostname: string) {
-  return hostname.endsWith(".lovable.app") || hostname.endsWith(".lovableproject.com");
-}
-
 function assertAllowedOAuthRedirect(url: string, allowedHosts: string[]) {
   const parsed = new URL(url);
   const ok = allowedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
   if (!ok) throw new Error("Invalid OAuth redirect URL");
+}
+
+function getBackendAuthHost(): string {
+  // This is the backend Auth endpoint host that returns from signInWithOAuth when skipBrowserRedirect is true.
+  // We must allow it, otherwise we'd block legitimate redirects.
+  const backendUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  if (!backendUrl) return "";
+  try {
+    return new URL(backendUrl).hostname;
+  } catch {
+    return "";
+  }
 }
 
 export default function Auth() {
@@ -125,22 +132,11 @@ export default function Auth() {
         await handleNativeGoogleAuth();
         // Don't set loading to false here - deep link listener will handle it
       } else {
-        const redirectTo = `${window.location.origin}/auth`;
-        const hostname = window.location.hostname;
-
-        // On lovable-hosted domains, use the managed Lovable OAuth helper.
-        if (isLovableHostedDomain(hostname)) {
-          const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirectTo });
-          if (res.error) throw res.error;
-          // If redirected, the page will navigate away; otherwise session was set.
-          return;
-        }
-
-        // On custom domains, bypass the (currently 404ing) hosted broker and fetch the provider URL directly.
+        // Always bypass /~oauth/* by fetching the auth URL directly and redirecting manually.
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo,
+            redirectTo: `${window.location.origin}/auth`,
             skipBrowserRedirect: true,
           },
         });
@@ -148,7 +144,8 @@ export default function Auth() {
         if (error) throw error;
         if (!data?.url) throw new Error("No OAuth URL returned");
 
-        assertAllowedOAuthRedirect(data.url, ["accounts.google.com"]);
+        const backendHost = getBackendAuthHost();
+        assertAllowedOAuthRedirect(data.url, [backendHost, "accounts.google.com"]);
         window.location.assign(data.url);
       }
     } catch (error: any) {
@@ -175,19 +172,10 @@ export default function Auth() {
     setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/auth`;
-      const hostname = window.location.hostname;
-
-      if (isLovableHostedDomain(hostname)) {
-        const res = await lovable.auth.signInWithOAuth("apple", { redirect_uri: redirectTo });
-        if (res.error) throw res.error;
-        return;
-      }
-
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "apple",
         options: {
-          redirectTo,
+          redirectTo: `${window.location.origin}/auth`,
           skipBrowserRedirect: true,
         },
       });
@@ -195,7 +183,8 @@ export default function Auth() {
       if (error) throw error;
       if (!data?.url) throw new Error("No OAuth URL returned");
 
-      assertAllowedOAuthRedirect(data.url, ["appleid.apple.com"]);
+      const backendHost = getBackendAuthHost();
+      assertAllowedOAuthRedirect(data.url, [backendHost, "appleid.apple.com"]);
       window.location.assign(data.url);
     } catch (error: any) {
       toast({
