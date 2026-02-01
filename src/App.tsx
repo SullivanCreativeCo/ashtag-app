@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { StartupDiagnostics } from "@/components/StartupDiagnostics";
+import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
 import Rate from "./pages/Rate";
@@ -30,7 +31,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/feed" replace />} />
+              <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/rate" element={<Rate />} />
