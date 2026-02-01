@@ -142,15 +142,6 @@ const Landing = () => {
               </p>
             </div>
 
-            {/* Stats */}
-            <div className="flex flex-wrap gap-8 md:gap-16">
-              {stats.map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="font-display text-3xl md:text-4xl text-primary">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </div>
-              ))}
-            </div>
 
             {/* Feature cards */}
             <div className="grid md:grid-cols-3 gap-6">
