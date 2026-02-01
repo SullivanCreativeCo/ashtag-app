@@ -41,7 +41,7 @@ const Landing = () => {
             <span className="font-display text-lg sm:text-xl text-primary">AshTag</span>
           </div>
           <Button 
-            onClick={() => navigate("/feed")}
+            onClick={() => navigate("/auth")}
             variant="outline"
             className="border-primary/30 text-primary hover:bg-primary/10 text-sm sm:text-base px-3 sm:px-4 h-9 sm:h-10 touch-manipulation"
           >
@@ -79,7 +79,7 @@ const Landing = () => {
 
               <div className="flex flex-col items-center lg:items-start gap-4">
                 <Button 
-                  onClick={() => navigate("/feed")}
+                  onClick={() => navigate("/auth")}
                   size="lg"
                   className="btn-glow text-primary-foreground font-semibold px-6 sm:px-8 w-full sm:w-auto touch-manipulation min-h-[48px]"
                 >
@@ -194,7 +194,7 @@ const Landing = () => {
               Keep a record of every cigar you'd light again.
             </p>
             <Button 
-              onClick={() => navigate("/feed")}
+              onClick={() => navigate("/auth")}
               size="lg"
               className="btn-glow text-primary-foreground font-semibold px-8 sm:px-12 w-full sm:w-auto touch-manipulation min-h-[48px]"
             >
