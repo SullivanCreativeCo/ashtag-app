@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { getRememberDevicePreference } from "@/lib/session-storage";
 
 interface Profile {
   id: string;
@@ -61,7 +62,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Handle "Remember this device" - clear session on browser close if not remembered
+    const handleBeforeUnload = () => {
+      const shouldRemember = getRememberDevicePreference();
+      if (!shouldRemember) {
+        // Mark session as temporary - will be cleared on page reload
+        sessionStorage.setItem("ashtag_clear_session", "true");
+      }
+    };
+
+    // Check if we need to clear the session (user didn't want to be remembered)
+    const shouldClearSession = sessionStorage.getItem("ashtag_clear_session");
+    if (shouldClearSession) {
+      sessionStorage.removeItem("ashtag_clear_session");
+      supabase.auth.signOut();
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
