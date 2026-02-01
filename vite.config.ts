@@ -46,6 +46,10 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+          // Ensure users get the latest build quickly (important for auth flow fixes)
+          clientsClaim: true,
+          skipWaiting: true,
+          cleanupOutdatedCaches: true,
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
