@@ -60,18 +60,14 @@ const Landing = () => {
             <div className="space-y-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                 <span className="text-sm text-primary font-medium">Sign Up</span>
-                <span className="text-muted-foreground">|</span>
-                <span className="text-sm text-foreground">Become an Aficionado</span>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
 
               <h1 className="font-display text-4xl md:text-5xl lg:text-6xl leading-tight">
-                Your{" "}
-                <span className="text-primary">Ultimate</span>
+                <span className="text-primary">AshTag.</span>
                 <br />
-                <span className="text-primary">Cigar</span> Companion
-                <br />
-                Awaits
+                <span className="text-foreground text-2xl md:text-3xl lg:text-4xl">
+                  Smoke It. Rate It. Share It. Remember It.
+                </span>
               </h1>
 
               <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
@@ -80,30 +76,31 @@ const Landing = () => {
                 Use the web app or download the free iOS app.
               </p>
 
-              <div className="flex flex-wrap gap-4 items-center">
+              <div className="flex flex-col gap-4">
                 <Button 
                   onClick={() => navigate("/feed")}
                   size="lg"
-                  className="btn-glow text-primary-foreground font-semibold px-8"
+                  className="btn-glow text-primary-foreground font-semibold px-8 w-fit"
                 >
                   Use the Web App <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 
-                <a 
-                  href="https://apps.apple.com/us/app/ashtag-cigar-companion/id6745390650"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-transform hover:scale-105"
-                >
-                  <img 
-                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" 
-                    alt="Download on the App Store" 
-                    className="h-12"
-                  />
-                </a>
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-3 opacity-40 pointer-events-none">
+                    <img 
+                      src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" 
+                      alt="Download on the App Store" 
+                      className="h-12"
+                    />
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
+                      alt="Get it on Google Play" 
+                      className="h-12"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Coming Soon</p>
+                </div>
               </div>
-              
-              <p className="text-sm text-muted-foreground">Android coming soon</p>
             </div>
 
             {/* Right - Phone mockup */}
