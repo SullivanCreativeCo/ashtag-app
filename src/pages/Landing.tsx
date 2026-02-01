@@ -165,7 +165,7 @@ const Landing = () => {
       <section className="py-20 px-6 lg:px-12">
         <div className="container mx-auto max-w-4xl text-center space-y-8">
           <h2 className="font-display text-3xl md:text-4xl">
-            Built for <span className="text-primary">Newcomers</span> and Seasoned Smokers Alike
+            Built for <span className="text-primary">Newcomers</span> and <span className="text-primary">Seasoned</span> Smokers Alike
           </h2>
           <p className="text-xl text-muted-foreground">
             Join the Community
