@@ -13,7 +13,12 @@ import { setRememberDevicePreference } from "@/lib/session-storage";
 
 function assertAllowedOAuthRedirect(url: string, allowedHosts: string[]) {
   const parsed = new URL(url);
-  const ok = allowedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+  const normalized = allowedHosts.filter(Boolean);
+  const ok =
+    normalized.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)) ||
+    // Fallback: allow the backend auth host even if env parsing fails, but only for known backend domains.
+    parsed.hostname.endsWith(".supabase.co") ||
+    parsed.hostname.endsWith(".supabase.com");
   if (!ok) throw new Error("Invalid OAuth redirect URL");
 }
 
@@ -145,7 +150,7 @@ export default function Auth() {
         if (!data?.url) throw new Error("No OAuth URL returned");
 
         const backendHost = getBackendAuthHost();
-        assertAllowedOAuthRedirect(data.url, [backendHost, "accounts.google.com"]);
+        assertAllowedOAuthRedirect(data.url, [backendHost, "accounts.google.com", "oauth.lovable.app"]);
         window.location.assign(data.url);
       }
     } catch (error: any) {
@@ -184,7 +189,7 @@ export default function Auth() {
       if (!data?.url) throw new Error("No OAuth URL returned");
 
       const backendHost = getBackendAuthHost();
-      assertAllowedOAuthRedirect(data.url, [backendHost, "appleid.apple.com"]);
+      assertAllowedOAuthRedirect(data.url, [backendHost, "appleid.apple.com", "oauth.lovable.app"]);
       window.location.assign(data.url);
     } catch (error: any) {
       toast({
