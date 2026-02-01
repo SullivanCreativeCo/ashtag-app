@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Flame, Users, Camera, Star, ArrowRight } from "lucide-react";
 import logo from "@/assets/ashtag-logo-new.png";
+import appScreenshot from "@/assets/app-screenshot-feed.png";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -108,47 +109,13 @@ const Landing = () => {
               <div className="relative w-[280px] md:w-[320px]">
                 {/* Phone frame */}
                 <div className="relative rounded-[40px] border-[8px] border-charcoal-light bg-charcoal overflow-hidden shadow-float">
-                  {/* Phone screen content */}
+                  {/* Phone screen content - real screenshot */}
                   <div className="aspect-[9/19] bg-background overflow-hidden">
-                    {/* Mock app header */}
-                    <div className="bg-card/90 backdrop-blur px-4 py-3 flex items-center justify-center border-b border-border/50">
-                      <img src={logo} alt="AshTag" className="h-6 w-auto" />
-                      <span className="font-display text-sm text-primary ml-2">AshTag</span>
-                    </div>
-                    
-                    {/* Mock feed items */}
-                    <div className="p-3 space-y-3">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="card-elevated p-3 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-muted" />
-                            <div className="space-y-1">
-                              <div className="h-2 w-16 bg-muted rounded" />
-                              <div className="h-1.5 w-12 bg-muted/50 rounded" />
-                            </div>
-                          </div>
-                          <div className="h-24 bg-muted rounded-lg" />
-                          <div className="flex items-center gap-2">
-                            <div className="flex gap-0.5">
-                              {[1, 2, 3, 4, 5].map((s) => (
-                                <Flame key={s} className="h-3 w-3 text-primary" />
-                              ))}
-                            </div>
-                            <span className="text-[10px] text-muted-foreground">Avg. Rating</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Mock bottom nav */}
-                    <div className="absolute bottom-0 left-0 right-0 glass-nav py-3 flex justify-around">
-                      {["Smoke", "Rate", "Save", "Club"].map((tab, i) => (
-                        <div key={tab} className={`text-center ${i === 0 ? "text-primary" : "text-muted-foreground"}`}>
-                          <div className={`w-5 h-5 mx-auto mb-1 rounded-md ${i === 0 ? "bg-primary/20" : "bg-muted/30"}`} />
-                          <span className="text-[9px]">{tab}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <img 
+                      src={appScreenshot} 
+                      alt="AshTag App Feed" 
+                      className="w-full h-full object-cover object-top"
+                    />
                   </div>
                 </div>
                 
