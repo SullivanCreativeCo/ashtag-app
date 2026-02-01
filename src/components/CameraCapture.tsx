@@ -260,7 +260,7 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
           className="mt-6 touch-manipulation"
           disabled={isCapturing}
         >
-          {isCapturing ? "Opening…" : "Open Camera"}
+          {isCapturing ? "Opening…" : "Continue"}
         </Button>
       </div>
     );

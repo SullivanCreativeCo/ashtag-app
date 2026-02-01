@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut, ImageIcon, Users } from "lucide-react";
+import { User, LogOut, ImageIcon, Users, Settings } from "lucide-react";
 import ashtagLogo from "@/assets/ashtag-logo-new.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -110,7 +110,7 @@ export function AppHeader() {
               {isAdmin && (
                 <>
                   <DropdownMenuItem 
-                    onClick={() => navigate("/admin/band-images")}
+                    onClick={() => navigate("/admin")}
                     className="gap-2 cursor-pointer"
                   >
                     <ImageIcon className="h-4 w-4" />
@@ -119,6 +119,14 @@ export function AppHeader() {
                   <DropdownMenuSeparator className="bg-border/50" />
                 </>
               )}
+              <DropdownMenuItem 
+                onClick={() => navigate("/settings")}
+                className="gap-2 cursor-pointer"
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border/50" />
               <DropdownMenuItem 
                 onClick={handleSignOut} 
                 className="text-destructive focus:text-destructive gap-2 cursor-pointer"
