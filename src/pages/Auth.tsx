@@ -276,30 +276,31 @@ export default function Auth() {
               />
             </div>
 
-            <div className="flex items-start space-x-3 pt-2">
+            <div className="flex items-start space-x-3 pt-2 min-h-[44px] touch-manipulation">
               <Checkbox
                 id="ageVerification"
                 checked={ageVerified}
                 onCheckedChange={(checked) => setAgeVerified(checked === true)}
-                className="mt-0.5"
+                className="mt-0.5 h-5 w-5 shrink-0"
               />
               <Label 
                 htmlFor="ageVerification" 
-                className="text-sm text-muted-foreground leading-relaxed cursor-pointer"
+                className="text-sm text-muted-foreground leading-relaxed cursor-pointer select-none"
               >
                 By checking this box, I certify that I am 21 years of age or older.
               </Label>
             </div>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 min-h-[44px] touch-manipulation">
               <Checkbox
                 id="rememberDevice"
                 checked={rememberDevice}
                 onCheckedChange={(checked) => setRememberDevice(checked === true)}
+                className="h-5 w-5 shrink-0"
               />
               <Label 
                 htmlFor="rememberDevice" 
-                className="text-sm text-muted-foreground cursor-pointer"
+                className="text-sm text-muted-foreground cursor-pointer select-none"
               >
                 Remember this device
               </Label>
