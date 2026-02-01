@@ -1,0 +1,275 @@
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Flame, Users, Camera, Star, ArrowRight } from "lucide-react";
+import logo from "@/assets/ashtag-logo-new.png";
+
+const Landing = () => {
+  const navigate = useNavigate();
+
+  const features = [
+    {
+      icon: Camera,
+      title: "Snap & Identify",
+      description: "Photograph any cigar band and let AI identify it instantly from our database."
+    },
+    {
+      icon: Star,
+      title: "Rate & Remember",
+      description: "Log your smokes with detailed ratings on flavor, construction, burn, and strength."
+    },
+    {
+      icon: Users,
+      title: "Connect & Share",
+      description: "Follow fellow aficionados, share your experiences, and discover what the community is enjoying."
+    }
+  ];
+
+  const stats = [
+    { value: "500+", label: "Cigar Profiles" },
+    { value: "Social", label: "Community" },
+    { value: "Free", label: "To Use" }
+  ];
+
+  return (
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 header-blur border-b border-border/30">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="AshTag" className="h-10 w-auto" />
+            <span className="font-display text-xl text-primary">AshTag</span>
+          </div>
+          <Button 
+            onClick={() => navigate("/feed")}
+            variant="outline"
+            className="border-primary/30 text-primary hover:bg-primary/10"
+          >
+            Sign In
+          </Button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 px-6 lg:px-12">
+        {/* Background glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="container mx-auto max-w-6xl relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left content */}
+            <div className="space-y-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+                <span className="text-sm text-primary font-medium">Sign Up</span>
+                <span className="text-muted-foreground">|</span>
+                <span className="text-sm text-foreground">Become an Aficionado</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+
+              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl leading-tight">
+                Your{" "}
+                <span className="text-primary">Ultimate</span>
+                <br />
+                <span className="text-primary">Cigar</span> Companion
+                <br />
+                Awaits
+              </h1>
+
+              <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+                Explore <span className="text-primary font-medium">500+ detailed cigar profiles</span>, 
+                track your humidor, and share reviews with fellow enthusiasts. 
+                Use the web app or download the free iOS app.
+              </p>
+
+              <div className="flex flex-wrap gap-4 items-center">
+                <Button 
+                  onClick={() => navigate("/feed")}
+                  size="lg"
+                  className="btn-glow text-primary-foreground font-semibold px-8"
+                >
+                  Use the Web App <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                
+                <a 
+                  href="https://apps.apple.com/us/app/ashtag-cigar-companion/id6745390650"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-transform hover:scale-105"
+                >
+                  <img 
+                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" 
+                    alt="Download on the App Store" 
+                    className="h-12"
+                  />
+                </a>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">Android coming soon</p>
+            </div>
+
+            {/* Right - Phone mockup */}
+            <div className="relative flex justify-center lg:justify-end">
+              <div className="relative w-[280px] md:w-[320px]">
+                {/* Phone frame */}
+                <div className="relative rounded-[40px] border-[8px] border-charcoal-light bg-charcoal overflow-hidden shadow-float">
+                  {/* Phone screen content */}
+                  <div className="aspect-[9/19] bg-background overflow-hidden">
+                    {/* Mock app header */}
+                    <div className="bg-card/90 backdrop-blur px-4 py-3 flex items-center justify-center border-b border-border/50">
+                      <img src={logo} alt="AshTag" className="h-6 w-auto" />
+                      <span className="font-display text-sm text-primary ml-2">AshTag</span>
+                    </div>
+                    
+                    {/* Mock feed items */}
+                    <div className="p-3 space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="card-elevated p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-muted" />
+                            <div className="space-y-1">
+                              <div className="h-2 w-16 bg-muted rounded" />
+                              <div className="h-1.5 w-12 bg-muted/50 rounded" />
+                            </div>
+                          </div>
+                          <div className="h-24 bg-muted rounded-lg" />
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-0.5">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Flame key={s} className="h-3 w-3 text-primary" />
+                              ))}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">Avg. Rating</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Mock bottom nav */}
+                    <div className="absolute bottom-0 left-0 right-0 glass-nav py-3 flex justify-around">
+                      {["Smoke", "Rate", "Save", "Club"].map((tab, i) => (
+                        <div key={tab} className={`text-center ${i === 0 ? "text-primary" : "text-muted-foreground"}`}>
+                          <div className={`w-5 h-5 mx-auto mb-1 rounded-md ${i === 0 ? "bg-primary/20" : "bg-muted/30"}`} />
+                          <span className="text-[9px]">{tab}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Glow effect */}
+                <div className="absolute inset-0 rounded-[40px] bg-primary/20 blur-3xl -z-10 opacity-30" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 px-6 lg:px-12">
+        <div className="container mx-auto max-w-6xl">
+          <div className="card-glass p-8 md:p-12 space-y-12">
+            <div className="max-w-2xl">
+              <h2 className="font-display text-3xl md:text-4xl mb-4">
+                Everything You Need to{" "}
+                <span className="text-primary">Elevate</span> Your Cigar Experience
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                Discover cigars that match your taste, keep your collection organized, 
+                and see what the community is enjoying. AshTag keeps your cigar life in one place.
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="flex flex-wrap gap-8 md:gap-16">
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="font-display text-3xl md:text-4xl text-primary">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Feature cards */}
+            <div className="grid md:grid-cols-3 gap-6">
+              {features.map((feature) => (
+                <div key={feature.title} className="card-leather p-6 space-y-4 group hover:border-primary/30 transition-colors">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <feature.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-display text-xl">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Section */}
+      <section className="py-20 px-6 lg:px-12">
+        <div className="container mx-auto max-w-4xl text-center space-y-8">
+          <h2 className="font-display text-3xl md:text-4xl">
+            Trusted by <span className="text-primary">Cigar Enthusiasts</span>
+          </h2>
+          <p className="text-xl text-muted-foreground">
+            Join a Growing Community of Aficionados
+          </p>
+          
+          <div className="flex flex-wrap justify-center gap-4 pt-4">
+            {["Premium Selection", "Community Driven", "AI-Powered", "Free to Use"].map((tag) => (
+              <div key={tag} className="badge-gold">
+                <Flame className="h-3 w-3" />
+                {tag}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-6 lg:px-12">
+        <div className="container mx-auto max-w-4xl">
+          <div className="card-cinematic p-8 md:p-12 text-center space-y-6 glow-gold">
+            <h2 className="font-display text-3xl md:text-4xl">
+              Ready to Elevate Your Experience?
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              For the ones worth remembering. Start logging your smokes today.
+            </p>
+            <Button 
+              onClick={() => navigate("/feed")}
+              size="lg"
+              className="btn-glow text-primary-foreground font-semibold px-12"
+            >
+              Get Started <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-6 border-t border-border/30">
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="AshTag" className="h-8 w-auto" />
+              <span className="font-display text-lg text-primary">AshTag</span>
+            </div>
+            
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a>
+              <a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
+            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} AshTag. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Landing;
