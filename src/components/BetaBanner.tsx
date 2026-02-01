@@ -27,7 +27,7 @@ export function BetaBanner() {
           
           <div className="space-y-1">
             <h3 className="font-display text-sm font-semibold text-primary">
-              Beta Ends January 31st
+              Beta Ends March 31st
             </h3>
             <p className="text-xs text-muted-foreground font-body leading-relaxed">
               Rate a cigar and upload a photo before the deadline to earn{" "}
