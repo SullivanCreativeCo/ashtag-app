@@ -11,7 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { isNativeApp, handleNativeGoogleAuth, setupDeepLinkListener } from "@/lib/capacitor-auth";
 import { setRememberDevicePreference } from "@/lib/session-storage";
-import { signInWithLovableOAuthPopup } from "@/lib/lovable-oauth";
+
+function isLovableHostedDomain(hostname: string) {
+  return hostname.endsWith(".lovable.app") || hostname.endsWith(".lovableproject.com");
+}
+
+function assertAllowedOAuthRedirect(url: string, allowedHosts: string[]) {
+  const parsed = new URL(url);
+  const ok = allowedHosts.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+  if (!ok) throw new Error("Invalid OAuth redirect URL");
+}
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -116,10 +125,31 @@ export default function Auth() {
         await handleNativeGoogleAuth();
         // Don't set loading to false here - deep link listener will handle it
       } else {
-        // Web OAuth flow (popup/new tab) to avoid /~oauth/* 404s on custom domains
-        const result = await signInWithLovableOAuthPopup("google");
-        if (result.error) throw result.error;
-        await supabase.auth.setSession(result.tokens);
+        const redirectTo = `${window.location.origin}/auth`;
+        const hostname = window.location.hostname;
+
+        // On lovable-hosted domains, use the managed Lovable OAuth helper.
+        if (isLovableHostedDomain(hostname)) {
+          const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirectTo });
+          if (res.error) throw res.error;
+          // If redirected, the page will navigate away; otherwise session was set.
+          return;
+        }
+
+        // On custom domains, bypass the (currently 404ing) hosted broker and fetch the provider URL directly.
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo,
+            skipBrowserRedirect: true,
+          },
+        });
+
+        if (error) throw error;
+        if (!data?.url) throw new Error("No OAuth URL returned");
+
+        assertAllowedOAuthRedirect(data.url, ["accounts.google.com"]);
+        window.location.assign(data.url);
       }
     } catch (error: any) {
       toast({
@@ -145,9 +175,28 @@ export default function Auth() {
     setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
-      const result = await signInWithLovableOAuthPopup("apple");
-      if (result.error) throw result.error;
-      await supabase.auth.setSession(result.tokens);
+      const redirectTo = `${window.location.origin}/auth`;
+      const hostname = window.location.hostname;
+
+      if (isLovableHostedDomain(hostname)) {
+        const res = await lovable.auth.signInWithOAuth("apple", { redirect_uri: redirectTo });
+        if (res.error) throw res.error;
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.url) throw new Error("No OAuth URL returned");
+
+      assertAllowedOAuthRedirect(data.url, ["appleid.apple.com"]);
+      window.location.assign(data.url);
     } catch (error: any) {
       toast({
         title: "Error",
