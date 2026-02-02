@@ -64,7 +64,8 @@ export async function signInWithLovableOAuthPopup(provider: OAuthProvider): Prom
   | { tokens?: undefined; error: Error }
 > {
   const oauthOrigin = "https://oauth.lovable.app";
-  const oauthBrokerUrl = `${oauthOrigin}/~oauth/initiate`;
+  // NOTE: Lovable's hosted broker endpoint is `/initiate` (the older `/~oauth/initiate` now 404s).
+  const oauthBrokerUrl = `${oauthOrigin}/initiate`;
 
   const state = generateState();
   const redirectUri = window.location.origin;
