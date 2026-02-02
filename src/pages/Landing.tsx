@@ -1,12 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { Flame, Users, Camera, Star, ArrowRight } from "lucide-react";
 import logo from "@/assets/ashtag-logo-new.png";
 import appScreenshot from "@/assets/app-screenshot-feed.png";
 
 const Landing = () => {
-  const navigate = useNavigate();
-
   const features = [
     {
       icon: Camera,
@@ -41,11 +38,11 @@ const Landing = () => {
             <span className="font-display text-lg sm:text-xl text-primary">AshTag</span>
           </div>
           <Button 
-            onClick={() => navigate("/auth")}
             variant="outline"
             className="border-primary/30 text-primary hover:bg-primary/10 text-sm sm:text-base px-3 sm:px-4 h-9 sm:h-10 touch-manipulation"
+            asChild
           >
-            Sign In
+            <a href="/auth">Sign In</a>
           </Button>
         </div>
       </header>
@@ -79,11 +76,13 @@ const Landing = () => {
 
               <div className="flex flex-col items-center lg:items-start gap-4">
                 <Button 
-                  onClick={() => navigate("/auth")}
                   size="lg"
                   className="btn-glow text-primary-foreground font-semibold px-6 sm:px-8 w-full sm:w-auto touch-manipulation min-h-[48px]"
+                  asChild
                 >
-                  Use the Web App <ArrowRight className="ml-2 h-5 w-5" />
+                  <a href="/auth">
+                    Use the Web App <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
                 </Button>
                 
                 <div className="flex flex-col gap-2">
@@ -194,11 +193,13 @@ const Landing = () => {
               Keep a record of every cigar you'd light again.
             </p>
             <Button 
-              onClick={() => navigate("/auth")}
               size="lg"
               className="btn-glow text-primary-foreground font-semibold px-8 sm:px-12 w-full sm:w-auto touch-manipulation min-h-[48px]"
+              asChild
             >
-              Log Your First Cigar <ArrowRight className="ml-2 h-5 w-5" />
+              <a href="/auth">
+                Log Your First Cigar <ArrowRight className="ml-2 h-5 w-5" />
+              </a>
             </Button>
           </div>
         </div>
