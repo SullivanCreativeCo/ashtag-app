@@ -46,15 +46,27 @@ const initApp = async () => {
 };
 
 // Check if we're running in a native Capacitor app
+// IMPORTANT: This must be strict to avoid false positives on web/custom domains.
+// On web, window.Capacitor may still exist from the npm package, but isNativePlatform() should be false.
 export const isNativeApp = (): boolean => {
   try {
-    // Try synchronous check first for already-loaded module
+    // Prefer the already-loaded module if available
     if (Capacitor) {
-      return Capacitor.isNativePlatform();
+      const isNative = Capacitor.isNativePlatform();
+      console.log('[isNativeApp] Capacitor module check:', isNative);
+      return isNative;
     }
-    // Fallback: check if window.Capacitor exists (set by native bridge)
-    return !!(window as any).Capacitor?.isNativePlatform?.();
-  } catch {
+    // Fallback: check if window.Capacitor exists AND reports native platform
+    const windowCap = (window as any).Capacitor;
+    if (windowCap && typeof windowCap.isNativePlatform === 'function') {
+      const isNative = windowCap.isNativePlatform();
+      console.log('[isNativeApp] window.Capacitor check:', isNative);
+      return isNative;
+    }
+    console.log('[isNativeApp] No Capacitor found, returning false');
+    return false;
+  } catch (e) {
+    console.log('[isNativeApp] Error:', e);
     return false;
   }
 };

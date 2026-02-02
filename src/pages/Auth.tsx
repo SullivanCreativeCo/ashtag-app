@@ -115,12 +115,17 @@ export default function Auth() {
     setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
-      if (isNativeApp()) {
+      const native = isNativeApp();
+      console.log('[handleGoogleAuth] isNativeApp:', native);
+      
+      if (native) {
         // Use native OAuth flow with Browser plugin
+        console.log('[handleGoogleAuth] Using native flow');
         await handleNativeGoogleAuth();
         // Don't set loading to false here - deep link listener will handle it
       } else {
         // Web-only: use web_message popup flow to avoid domain routing /~oauth 404s.
+        console.log('[handleGoogleAuth] Using popup flow');
         const { tokens, error } = await signInWithLovableOAuthPopup("google");
         if (error) throw error;
         await supabase.auth.setSession(tokens);
@@ -151,8 +156,12 @@ export default function Auth() {
     setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
-      if (isNativeApp()) {
+      const native = isNativeApp();
+      console.log('[handleAppleAuth] isNativeApp:', native);
+      
+      if (native) {
         // Native: keep using the managed flow (deep link listener will resolve UI state).
+        console.log('[handleAppleAuth] Using native flow');
         const result = await lovable.auth.signInWithOAuth("apple", {
           redirect_uri: `${window.location.origin}/auth`,
         });
@@ -160,6 +169,7 @@ export default function Auth() {
         if (!result?.redirected) setLoading(false);
       } else {
         // Web-only: use web_message popup flow to avoid domain routing /~oauth 404s.
+        console.log('[handleAppleAuth] Using popup flow');
         const { tokens, error } = await signInWithLovableOAuthPopup("apple");
         if (error) throw error;
         await supabase.auth.setSession(tokens);
