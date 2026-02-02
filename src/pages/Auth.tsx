@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable";
+import { signInWithLovableOAuthPopup } from "@/lib/lovable-oauth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -119,17 +120,12 @@ export default function Auth() {
         await handleNativeGoogleAuth();
         // Don't set loading to false here - deep link listener will handle it
       } else {
-        // Lovable Cloud managed OAuth (avoids missing OAuth secrets in the client config)
-        const result = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: `${window.location.origin}/auth`,
-        });
-
-        if (result?.error) throw result.error;
-        // If redirected, the browser is navigating away; keep loading state.
-        if (!result?.redirected) {
-          // Tokens were set locally; auth listener will navigate.
-          setLoading(false);
-        }
+        // Web-only: use web_message popup flow to avoid domain routing /~oauth 404s.
+        const { tokens, error } = await signInWithLovableOAuthPopup("google");
+        if (error) throw error;
+        await supabase.auth.setSession(tokens);
+        // Auth listener will navigate; ensure we don't leave the UI spinning.
+        setLoading(false);
       }
     } catch (error: any) {
       toast({
@@ -155,12 +151,18 @@ export default function Auth() {
     setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("apple", {
-        redirect_uri: `${window.location.origin}/auth`,
-      });
-
-      if (result?.error) throw result.error;
-      if (!result?.redirected) {
+      if (isNativeApp()) {
+        // Native: keep using the managed flow (deep link listener will resolve UI state).
+        const result = await lovable.auth.signInWithOAuth("apple", {
+          redirect_uri: `${window.location.origin}/auth`,
+        });
+        if (result?.error) throw result.error;
+        if (!result?.redirected) setLoading(false);
+      } else {
+        // Web-only: use web_message popup flow to avoid domain routing /~oauth 404s.
+        const { tokens, error } = await signInWithLovableOAuthPopup("apple");
+        if (error) throw error;
+        await supabase.auth.setSession(tokens);
         setLoading(false);
       }
     } catch (error: any) {
