@@ -20,6 +20,19 @@ type OAuthResponse =
 // Lovable Cloud project UUID (safe to be public). Required by the hosted OAuth broker.
 const LOVABLE_PROJECT_ID = "f5a9ea03-2a73-4da8-aa01-6e381def1c2e";
 
+/**
+ * Detect if we're running inside an iframe (e.g., Lovable preview).
+ * Google blocks OAuth inside iframes, so we need different handling.
+ */
+export function isInIframe(): boolean {
+  try {
+    return window.self !== window.top;
+  } catch {
+    // Cross-origin iframe detection
+    return true;
+  }
+}
+
 function generateState() {
   if (typeof crypto !== "undefined" && crypto.getRandomValues) {
     return [...crypto.getRandomValues(new Uint8Array(16))]
