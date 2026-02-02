@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,29 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { isNativeApp, handleNativeGoogleAuth, setupDeepLinkListener } from "@/lib/capacitor-auth";
 import { setRememberDevicePreference } from "@/lib/session-storage";
-
-function assertAllowedOAuthRedirect(url: string, allowedHosts: string[]) {
-  const parsed = new URL(url);
-  const normalized = allowedHosts.filter(Boolean);
-  const ok =
-    normalized.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`)) ||
-    // Fallback: allow the backend auth host even if env parsing fails, but only for known backend domains.
-    parsed.hostname.endsWith(".supabase.co") ||
-    parsed.hostname.endsWith(".supabase.com");
-  if (!ok) throw new Error("Invalid OAuth redirect URL");
-}
-
-function getBackendAuthHost(): string {
-  // This is the backend Auth endpoint host that returns from signInWithOAuth when skipBrowserRedirect is true.
-  // We must allow it, otherwise we'd block legitimate redirects.
-  const backendUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  if (!backendUrl) return "";
-  try {
-    return new URL(backendUrl).hostname;
-  } catch {
-    return "";
-  }
-}
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -141,21 +119,17 @@ export default function Auth() {
         await handleNativeGoogleAuth();
         // Don't set loading to false here - deep link listener will handle it
       } else {
-        // Always bypass /~oauth/* by fetching the auth URL directly and redirecting manually.
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: `${window.location.origin}/auth`,
-            skipBrowserRedirect: true,
-          },
+        // Lovable Cloud managed OAuth (avoids missing OAuth secrets in the client config)
+        const result = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: `${window.location.origin}/auth`,
         });
 
-        if (error) throw error;
-        if (!data?.url) throw new Error("No OAuth URL returned");
-
-        const backendHost = getBackendAuthHost();
-        assertAllowedOAuthRedirect(data.url, [backendHost, "accounts.google.com", "oauth.lovable.app"]);
-        window.location.assign(data.url);
+        if (result?.error) throw result.error;
+        // If redirected, the browser is navigating away; keep loading state.
+        if (!result?.redirected) {
+          // Tokens were set locally; auth listener will navigate.
+          setLoading(false);
+        }
       }
     } catch (error: any) {
       toast({
@@ -181,20 +155,14 @@ export default function Auth() {
     setRememberDevicePreference(rememberDevice);
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "apple",
-        options: {
-          redirectTo: `${window.location.origin}/auth`,
-          skipBrowserRedirect: true,
-        },
+      const result = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: `${window.location.origin}/auth`,
       });
 
-      if (error) throw error;
-      if (!data?.url) throw new Error("No OAuth URL returned");
-
-      const backendHost = getBackendAuthHost();
-      assertAllowedOAuthRedirect(data.url, [backendHost, "appleid.apple.com", "oauth.lovable.app"]);
-      window.location.assign(data.url);
+      if (result?.error) throw result.error;
+      if (!result?.redirected) {
+        setLoading(false);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
