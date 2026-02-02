@@ -67,11 +67,19 @@ export async function signInWithLovableOAuthPopup(provider: OAuthProvider): Prom
   // NOTE: Lovable's hosted broker endpoint is `/initiate` (the older `/~oauth/initiate` now 404s).
   const oauthBrokerUrl = `${oauthOrigin}/initiate`;
 
+  // The broker requires the Lovable/Supabase project id.
+  // Lovable Cloud provides it as a Vite env var.
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
+  if (!projectId) {
+    return { error: new Error("Missing VITE_SUPABASE_PROJECT_ID") };
+  }
+
   const state = generateState();
   const redirectUri = window.location.origin;
 
   const params = new URLSearchParams({
     provider,
+    project_id: projectId,
     redirect_uri: redirectUri,
     state,
     response_mode: "web_message",
