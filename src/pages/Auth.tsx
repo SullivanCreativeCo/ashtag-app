@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,12 +45,14 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState("");
   const [ageVerified, setAgeVerified] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
+  const hasNavigatedRef = useRef(false);
 
   const toggleAgeVerified = () => setAgeVerified((v) => !v);
 
   useEffect(() => {
-    if (user && !authLoading) {
-      navigate("/feed");
+    if (user && !authLoading && !hasNavigatedRef.current) {
+      hasNavigatedRef.current = true;
+      navigate("/feed", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
