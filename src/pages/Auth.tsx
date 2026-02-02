@@ -350,12 +350,17 @@ export default function Auth() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-ember py-6 font-semibold shadow-ember"
+              className="w-full bg-gradient-ember py-6 font-semibold shadow-ember disabled:opacity-50"
               disabled={loading || !ageVerified}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLogin ? "Sign In" : "Create Account"}
             </Button>
+            {!ageVerified && (
+              <p className="text-center text-xs text-destructive">
+                Please check the age verification box above to continue
+              </p>
+            )}
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
