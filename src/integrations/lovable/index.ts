@@ -2,10 +2,11 @@
 
 import { createLovableAuth } from "@lovable.dev/cloud-auth-js";
 import { supabase } from "../supabase/client";
-// In some environments (Preview iframe / custom domains), the relative broker path
-// can 404. Use the hosted broker explicitly.
+// The package's current type definitions require a config argument.
+// Use the hosted broker URL to avoid 404s on custom domains.
 const lovableAuth = createLovableAuth({
   oauthBrokerUrl: "https://oauth.lovable.app/~oauth/initiate",
+  supportedOAuthOrigins: ["https://oauth.lovable.app"],
 });
 
 export const lovable = {
