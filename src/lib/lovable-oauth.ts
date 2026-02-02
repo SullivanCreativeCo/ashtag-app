@@ -17,6 +17,9 @@ type OAuthResponse =
     }
   | undefined;
 
+// Lovable Cloud project UUID (safe to be public). Required by the hosted OAuth broker.
+const LOVABLE_PROJECT_ID = "f5a9ea03-2a73-4da8-aa01-6e381def1c2e";
+
 function generateState() {
   if (typeof crypto !== "undefined" && crypto.getRandomValues) {
     return [...crypto.getRandomValues(new Uint8Array(16))]
@@ -67,19 +70,12 @@ export async function signInWithLovableOAuthPopup(provider: OAuthProvider): Prom
   // NOTE: Lovable's hosted broker endpoint is `/initiate` (the older `/~oauth/initiate` now 404s).
   const oauthBrokerUrl = `${oauthOrigin}/initiate`;
 
-  // The broker requires the Lovable/Supabase project id.
-  // Lovable Cloud provides it as a Vite env var.
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
-  if (!projectId) {
-    return { error: new Error("Missing VITE_SUPABASE_PROJECT_ID") };
-  }
-
   const state = generateState();
   const redirectUri = window.location.origin;
 
   const params = new URLSearchParams({
     provider,
-    project_id: projectId,
+    project_id: LOVABLE_PROJECT_ID,
     redirect_uri: redirectUri,
     state,
     response_mode: "web_message",
