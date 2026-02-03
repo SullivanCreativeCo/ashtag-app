@@ -7,14 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { setRememberDevicePreference } from "@/lib/session-storage";
+
+type AuthMode = "login" | "signup" | "forgot-password";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>("login");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,7 +51,7 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -93,6 +95,45 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link. Please check your inbox.",
+      });
+      
+      // Return to login mode after successful request
+      setMode("login");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -101,6 +142,64 @@ export default function Auth() {
     );
   }
 
+  // Forgot Password View
+  if (mode === "forgot-password") {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+          <div className="mb-8 text-center">
+            <h1 className="font-display text-5xl font-bold tracking-tight text-foreground">
+              Ash<span className="text-primary">Tag</span>
+            </h1>
+            <p className="mt-3 text-lg text-muted-foreground">
+              Reset your password
+            </p>
+          </div>
+
+          <div className="w-full max-w-sm space-y-6">
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="resetEmail">Email</Label>
+                <Input
+                  id="resetEmail"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-card"
+                />
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Enter the email address associated with your account and we'll send you a link to reset your password.
+              </p>
+
+              <Button
+                type="submit"
+                className="w-full bg-gradient-ember py-6 font-semibold shadow-ember disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send Reset Link
+              </Button>
+            </form>
+
+            <button
+              type="button"
+              onClick={() => setMode("login")}
+              className="flex items-center justify-center gap-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to sign in
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Login / Signup View
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Hero section */}
@@ -117,7 +216,7 @@ export default function Auth() {
         <div className="w-full max-w-sm space-y-6">
           {/* Email Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
-            {!isLogin && (
+            {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="displayName">Display Name</Label>
                 <Input
@@ -145,7 +244,18 @@ export default function Auth() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => setMode("forgot-password")}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -194,7 +304,7 @@ export default function Auth() {
               disabled={loading || !ageVerified}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLogin ? "Sign In" : "Create Account"}
+              {mode === "login" ? "Sign In" : "Create Account"}
             </Button>
             {!ageVerified && (
               <p className="text-center text-xs text-destructive">
@@ -204,13 +314,13 @@ export default function Auth() {
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+            {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => setMode(mode === "login" ? "signup" : "login")}
               className="font-medium text-primary hover:underline"
             >
-              {isLogin ? "Sign up" : "Sign in"}
+              {mode === "login" ? "Sign up" : "Sign in"}
             </button>
           </p>
 
