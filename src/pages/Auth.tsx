@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable";
-import { signInWithLovableOAuthPopup, isInIframe } from "@/lib/lovable-oauth";
+import { signInWithLovableOAuthPopup } from "@/lib/lovable-oauth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,25 +116,16 @@ export default function Auth() {
     setLoading(true);
     try {
       const native = isNativeApp();
-      const inIframe = isInIframe();
-      console.log('[handleGoogleAuth] isNativeApp:', native, 'isInIframe:', inIframe);
+      console.log('[handleGoogleAuth] isNativeApp:', native);
       
       if (native) {
         // Use native OAuth flow with Browser plugin
         console.log('[handleGoogleAuth] Using native flow');
         await handleNativeGoogleAuth();
         // Don't set loading to false here - deep link listener will handle it
-      } else if (inIframe) {
-        // In Lovable preview iframe: use managed OAuth (handles web_message correctly)
-        console.log('[handleGoogleAuth] Using managed flow (iframe)');
-        const result = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: `${window.location.origin}/auth`,
-        });
-        if (result?.error) throw result.error;
-        if (!result?.redirected) setLoading(false);
       } else {
-        // Standalone web (custom domain): use popup flow to avoid /~oauth 404s
-        console.log('[handleGoogleAuth] Using popup flow (standalone)');
+        // Web (including preview iframe + custom domain): use popup flow to avoid /~oauth 404s
+        console.log('[handleGoogleAuth] Using popup flow (web)');
         const { tokens, error } = await signInWithLovableOAuthPopup("google");
         if (error) throw error;
         await supabase.auth.setSession(tokens);
@@ -165,8 +156,7 @@ export default function Auth() {
     setLoading(true);
     try {
       const native = isNativeApp();
-      const inIframe = isInIframe();
-      console.log('[handleAppleAuth] isNativeApp:', native, 'isInIframe:', inIframe);
+      console.log('[handleAppleAuth] isNativeApp:', native);
       
       if (native) {
         // Native: keep using the managed flow (deep link listener will resolve UI state).
@@ -176,17 +166,9 @@ export default function Auth() {
         });
         if (result?.error) throw result.error;
         if (!result?.redirected) setLoading(false);
-      } else if (inIframe) {
-        // In Lovable preview iframe: use managed OAuth (handles web_message correctly)
-        console.log('[handleAppleAuth] Using managed flow (iframe)');
-        const result = await lovable.auth.signInWithOAuth("apple", {
-          redirect_uri: `${window.location.origin}/auth`,
-        });
-        if (result?.error) throw result.error;
-        if (!result?.redirected) setLoading(false);
       } else {
-        // Standalone web (custom domain): use popup flow to avoid /~oauth 404s
-        console.log('[handleAppleAuth] Using popup flow (standalone)');
+        // Web (including preview iframe + custom domain): use popup flow to avoid /~oauth 404s
+        console.log('[handleAppleAuth] Using popup flow (web)');
         const { tokens, error } = await signInWithLovableOAuthPopup("apple");
         if (error) throw error;
         await supabase.auth.setSession(tokens);
