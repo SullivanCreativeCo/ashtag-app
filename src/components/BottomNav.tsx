@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Flame, DoorOpen, Cigarette, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 
 const baseNavItems = [
   {
@@ -30,28 +27,8 @@ const clubNavItem = {
 };
 
 export function BottomNav() {
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
-      const { data } = await supabase.rpc("has_role", {
-        _user_id: user.id,
-        _role: "admin",
-      });
-      setIsAdmin(!!data);
-    };
-    checkAdmin();
-  }, [user]);
-
-  // Only show Club tab to admins
-  const navItems = isAdmin 
-    ? [...baseNavItems, clubNavItem]
-    : baseNavItems;
+  // Show all nav items including Club to all users
+  const navItems = [...baseNavItems, clubNavItem];
   const location = useLocation();
   const navigate = useNavigate();
 

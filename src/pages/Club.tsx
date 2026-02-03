@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,8 @@ import {
   Eye,
   Plus,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -103,8 +105,28 @@ const mockProducts = [
 
 export default function Club() {
   const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [demoView, setDemoView] = useState<DemoView>("locked");
   const [showDemoToggle, setShowDemoToggle] = useState(true);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) {
+        setIsAdmin(false);
+        setIsCheckingAdmin(false);
+        return;
+      }
+      const { data } = await supabase.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+      setIsAdmin(!!data);
+      setIsCheckingAdmin(false);
+    };
+    checkAdmin();
+  }, [user]);
   
   // Lead capture form state
   const [loungeName, setLoungeName] = useState("");
@@ -127,6 +149,45 @@ export default function Club() {
     setMessage("");
     setIsSubmitting(false);
   };
+
+  // Show Coming Soon for non-admins
+  if (!isCheckingAdmin && !isAdmin) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+            <Crown className="h-10 w-10 text-primary" />
+          </div>
+          <Badge variant="secondary" className="mb-4 bg-primary/20 text-primary border-0">
+            <Clock className="h-3 w-3 mr-1" />
+            Coming Soon
+          </Badge>
+          <h1 className="font-display text-3xl font-semibold mb-3">
+            Members Club
+          </h1>
+          <p className="text-muted-foreground font-body max-w-sm mb-8">
+            Exclusive deals, notifications, and perks from your favorite cigar lounge — all in one place. Stay tuned!
+          </p>
+          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+            {[
+              { icon: Gift, label: "Exclusive Deals" },
+              { icon: Bell, label: "Push Alerts" },
+              { icon: ShoppingBag, label: "Easy Ordering" },
+              { icon: CreditCard, label: "Membership" },
+            ].map((feature) => (
+              <div 
+                key={feature.label}
+                className="card-glass p-4 opacity-60"
+              >
+                <feature.icon className="h-5 w-5 text-primary mb-2 mx-auto" />
+                <p className="font-display text-sm font-medium">{feature.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
