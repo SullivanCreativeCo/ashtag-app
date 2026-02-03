@@ -39,8 +39,8 @@ const App = () => (
               <Route path="/match-cigar" element={<MatchCigar />} />
               <Route path="/humidor" element={<Humidor />} />
               <Route path="/club" element={<Club />} />
-              <Route path="/profile/:userId" element={<Profile />} />
               <Route path="/profile/setup" element={<ProfileSetup />} />
+              <Route path="/profile/:userId" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/install" element={<Install />} />
               <Route path="/terms" element={<TermsOfService />} />
