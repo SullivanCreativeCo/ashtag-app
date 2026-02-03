@@ -22,11 +22,11 @@ export default function Auth() {
   const [ageVerified, setAgeVerified] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
   const hasNavigatedRef = useRef(false);
-
-  const toggleAgeVerified = () => setAgeVerified((v) => !v);
+  const isSigningUpRef = useRef(false);
 
   useEffect(() => {
-    if (user && !authLoading && !hasNavigatedRef.current) {
+    // Don't auto-redirect if we're in the middle of signup flow
+    if (user && !authLoading && !hasNavigatedRef.current && !isSigningUpRef.current) {
       hasNavigatedRef.current = true;
       navigate("/feed", { replace: true });
     }
@@ -58,6 +58,9 @@ export default function Auth() {
         if (error) throw error;
         navigate("/feed");
       } else {
+        // Mark that we're in signup flow to prevent useEffect redirect
+        isSigningUpRef.current = true;
+        
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -76,7 +79,8 @@ export default function Auth() {
           description: "Let's set up your profile.",
         });
         // Send new users to profile setup
-        navigate("/profile/setup");
+        hasNavigatedRef.current = true;
+        navigate("/profile/setup", { replace: true });
       }
     } catch (error: any) {
       toast({
@@ -154,25 +158,19 @@ export default function Auth() {
               />
             </div>
 
-            <div
-              className="flex items-start space-x-3 pt-2 min-h-[44px] touch-manipulation cursor-pointer"
-              role="button"
-              tabIndex={0}
-              onClick={toggleAgeVerified}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") toggleAgeVerified();
-              }}
-            >
+            <div className="flex items-start space-x-3 pt-2 min-h-[44px] touch-manipulation">
               <Checkbox
                 id="ageVerification"
                 checked={ageVerified}
                 onCheckedChange={(checked) => setAgeVerified(checked === true)}
                 className="mt-0.5 h-5 w-5 shrink-0"
-                onClick={(e) => e.stopPropagation()}
               />
-              <span className="text-sm text-muted-foreground leading-relaxed select-none">
+              <Label
+                htmlFor="ageVerification"
+                className="text-sm text-muted-foreground leading-relaxed select-none cursor-pointer"
+              >
                 By checking this box, I certify that I am 21 years of age or older.
-              </span>
+              </Label>
             </div>
 
             <div className="flex items-center space-x-3 min-h-[44px] touch-manipulation">
