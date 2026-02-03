@@ -150,8 +150,11 @@ export default function Club() {
     setIsSubmitting(false);
   };
 
-  // Show Coming Soon for non-admins
-  if (!isCheckingAdmin && !isAdmin) {
+  // Demo preview mode for non-admins
+  const [showDemoPreview, setShowDemoPreview] = useState(false);
+
+  // Show Coming Soon for non-admins (unless demo preview is active)
+  if (!isCheckingAdmin && !isAdmin && !showDemoPreview) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[70vh] px-6 text-center">
@@ -168,7 +171,7 @@ export default function Club() {
           <p className="text-muted-foreground font-body max-w-sm mb-8">
             Exclusive deals, notifications, and perks from your favorite cigar lounge — all in one place. Stay tuned!
           </p>
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+          <div className="grid grid-cols-2 gap-3 w-full max-w-sm mb-8">
             {[
               { icon: Gift, label: "Exclusive Deals" },
               { icon: Bell, label: "Push Alerts" },
@@ -184,10 +187,23 @@ export default function Club() {
               </div>
             ))}
           </div>
+          
+          {/* Demo Preview Button */}
+          <Button 
+            variant="outline" 
+            onClick={() => setShowDemoPreview(true)}
+            className="border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            Preview Demo
+          </Button>
         </div>
       </AppLayout>
     );
   }
+
+  // If non-admin is in demo preview, show exit button
+  const showExitDemo = !isAdmin && showDemoPreview;
 
   return (
     <AppLayout>
@@ -197,13 +213,23 @@ export default function Club() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-body text-muted-foreground uppercase tracking-widest mb-1">
-                Exclusive Access
+                {showExitDemo ? "Demo Preview" : "Exclusive Access"}
               </p>
               <h1 className="font-display text-3xl font-semibold text-foreground flex items-center gap-2">
                 Members Club
                 <Crown className="h-6 w-6 text-primary" />
               </h1>
             </div>
+            {showExitDemo && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowDemoPreview(false)}
+                className="border-primary/30 text-primary hover:bg-primary/10"
+              >
+                Exit Demo
+              </Button>
+            )}
           </div>
 
           {/* Demo Toggle - for sales pitches */}
