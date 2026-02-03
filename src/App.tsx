@@ -15,6 +15,7 @@ import Club from "./pages/Club";
 import Admin from "./pages/Admin";
 import Install from "./pages/Install";
 import Profile from "./pages/Profile";
+import ProfileSetup from "./pages/ProfileSetup";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Settings from "./pages/Settings";
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/humidor" element={<Humidor />} />
               <Route path="/club" element={<Club />} />
               <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/profile/setup" element={<ProfileSetup />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/install" element={<Install />} />
               <Route path="/terms" element={<TermsOfService />} />

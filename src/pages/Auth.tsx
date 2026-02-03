@@ -73,9 +73,10 @@ export default function Auth() {
 
         toast({
           title: "Account created!",
-          description: "Welcome to Ash Tag. Start logging your cigars!",
+          description: "Let's set up your profile.",
         });
-        navigate("/feed");
+        // Send new users to profile setup
+        navigate("/profile/setup");
       }
     } catch (error: any) {
       toast({
