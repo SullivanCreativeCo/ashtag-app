@@ -7,6 +7,7 @@ type ErrorState = {
   stack?: string;
   href?: string;
   ts: string;
+  reported?: boolean;
 };
 
 const STORAGE_KEY = "ashtag_startup_error_v1";
@@ -48,26 +49,36 @@ function clearPersistedError() {
 
 class StartupErrorBoundary extends React.Component<
   { children: React.ReactNode; onError: (state: ErrorState) => void },
-  { hasError: boolean }
+  { hasError: boolean; errorState: ErrorState | null }
 > {
-  state = { hasError: false };
+  state = { hasError: false, errorState: null as ErrorState | null };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error) {
+  static getDerivedStateFromError(error: Error) {
     const now = new Date();
-    const state: ErrorState = {
+    const errorState: ErrorState = {
       message: error.message || "Unknown error",
       stack: error.stack,
       href: typeof window !== "undefined" ? window.location.href : undefined,
       ts: now.toISOString(),
     };
-    this.props.onError(state);
+    persistError(errorState);
+    return { hasError: true, errorState };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Error already captured in getDerivedStateFromError
+    // Only call onError once, using a flag to prevent loops
+    if (this.state.errorState && !this.state.errorState.reported) {
+      const reported = { ...this.state.errorState, reported: true };
+      this.props.onError(reported);
+    }
   }
 
   render() {
+    // Don't render children if there's an error - let parent show error UI
+    if (this.state.hasError) {
+      return null;
+    }
     return this.props.children;
   }
 }
