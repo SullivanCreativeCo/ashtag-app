@@ -75,31 +75,33 @@ const Landing = () => {
               </p>
 
               <div className="flex flex-col items-center lg:items-start gap-4">
-                <Button 
+                <div className="flex flex-wrap gap-3">
+                  <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer" className="transition-opacity hover:opacity-80">
+                    <img
+                      src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                      alt="Download on the App Store"
+                      className="h-12"
+                    />
+                  </a>
+                  <a href="https://play.google.com" target="_blank" rel="noopener noreferrer" className="transition-opacity hover:opacity-80">
+                    <img
+                      src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                      alt="Get it on Google Play"
+                      className="h-12"
+                    />
+                  </a>
+                </div>
+
+                <Button
+                  variant="outline"
                   size="lg"
-                  className="btn-glow text-primary-foreground font-semibold px-6 sm:px-8 w-full sm:w-auto touch-manipulation min-h-[48px]"
+                  className="border-primary/30 text-primary hover:bg-primary/10 font-semibold px-6 sm:px-8 w-full sm:w-auto touch-manipulation min-h-[48px]"
                   asChild
                 >
                   <a href="/auth">
-                    Use the Web App <ArrowRight className="ml-2 h-5 w-5" />
+                    Sign In <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
                 </Button>
-                
-                <div className="flex flex-col gap-2">
-                  <div className="flex flex-wrap gap-3 opacity-40 pointer-events-none">
-                    <img 
-                      src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" 
-                      alt="Download on the App Store" 
-                      className="h-12"
-                    />
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" 
-                      alt="Get it on Google Play" 
-                      className="h-12"
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground">Coming Soon</p>
-                </div>
               </div>
             </div>
 

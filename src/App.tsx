@@ -3,8 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { StartupDiagnostics } from "@/components/StartupDiagnostics";
+import { isNativeApp } from "@/lib/capacitor-auth";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
@@ -23,6 +24,21 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Component to handle landing page - redirects native apps to auth/feed
+const LandingRoute = () => {
+  const { user, loading } = useAuth();
+
+  // On native apps, skip the landing page entirely
+  if (isNativeApp()) {
+    // If logged in, go to feed; otherwise go to auth
+    if (loading) return null; // Wait for auth state
+    return <Navigate to={user ? "/feed" : "/auth"} replace />;
+  }
+
+  // On web, show the landing page
+  return <Landing />;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <StartupDiagnostics>
@@ -32,7 +48,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Landing />} />
+              <Route path="/" element={<LandingRoute />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/feed" element={<Feed />} />
               <Route path="/rate" element={<Rate />} />
