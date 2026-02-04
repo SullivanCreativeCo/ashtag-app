@@ -52,11 +52,11 @@ export function usePresence(currentPage?: string): UsePresenceReturn {
         
         setOnlineUsers(users);
       })
-      .on("presence", { event: "join" }, ({ newPresences }) => {
-        console.log("User joined:", newPresences);
+      .on("presence", { event: "join" }, () => {
+        // User joined - presence sync handles state updates
       })
-      .on("presence", { event: "leave" }, ({ leftPresences }) => {
-        console.log("User left:", leftPresences);
+      .on("presence", { event: "leave" }, () => {
+        // User left - presence sync handles state updates
       })
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {

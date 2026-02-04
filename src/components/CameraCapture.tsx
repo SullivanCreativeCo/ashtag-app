@@ -42,11 +42,8 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
       // Dynamically import to avoid issues on web
       const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
       
-      console.log("Requesting camera permission...");
-      
       // Request permissions first
       const permissions = await Camera.requestPermissions({ permissions: ["camera"] });
-      console.log("Camera permissions:", permissions);
       
       if (permissions.camera !== "granted") {
         setError("Camera permission denied. Please enable camera access in Settings.");
@@ -54,8 +51,6 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
         return;
       }
       
-      console.log("Taking photo with Capacitor Camera...");
-
       // iOS can occasionally hang if the camera is launched outside a user gesture.
       // Additionally, if the native UI fails to present, we don't want to stay stuck.
       const image = await Promise.race([
@@ -77,17 +72,17 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
       ]);
       
       if (image.base64String) {
-        console.log("Photo captured successfully");
         const imageData = `data:image/jpeg;base64,${image.base64String}`;
         setCapturedImage(imageData);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Native camera error:", err);
+      const errorMessage = err instanceof Error ? err.message : "";
       // User cancelled is not an error
-      if (err?.message?.includes("cancelled") || err?.message?.includes("canceled")) {
-        console.log("User cancelled camera");
+      if (errorMessage.includes("cancelled") || errorMessage.includes("canceled")) {
+        // User cancelled - no action needed
       } else {
-        setError(err?.message || "Failed to access camera. Please check permissions in Settings.");
+        setError(errorMessage || "Failed to access camera. Please check permissions in Settings.");
       }
     } finally {
       setIsCapturing(false);
@@ -207,7 +202,6 @@ export function CameraCapture({ isOpen, onClose, onCapture }: CameraCaptureProps
   };
 
   const handleConfirm = () => {
-    console.log("handleConfirm called, capturedImage:", !!capturedImage);
     if (capturedImage) {
       // Parent should close the modal by updating isOpen after receiving the capture.
       // This avoids accidental navigation when onClose is wired to "go back".

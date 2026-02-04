@@ -63,7 +63,7 @@ export function BugReportButton() {
 
       setDescription("");
       setOpen(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to send bug report:", error);
       toast({
         title: "Failed to send report",

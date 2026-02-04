@@ -13,8 +13,7 @@ const initCapacitor = async () => {
       Capacitor = capacitorCore.Capacitor;
     }
     return true;
-  } catch (error) {
-    console.log('Capacitor not available:', error);
+  } catch {
     return false;
   }
 };
@@ -26,8 +25,7 @@ const initBrowser = async () => {
       Browser = browserModule.Browser;
     }
     return Browser;
-  } catch (error) {
-    console.log('Browser plugin not available:', error);
+  } catch {
     return null;
   }
 };
@@ -39,8 +37,7 @@ const initApp = async () => {
       CapacitorApp = appModule.App;
     }
     return CapacitorApp;
-  } catch (error) {
-    console.log('App plugin not available:', error);
+  } catch {
     return null;
   }
 };
@@ -52,21 +49,15 @@ export const isNativeApp = (): boolean => {
   try {
     // Prefer the already-loaded module if available
     if (Capacitor) {
-      const isNative = Capacitor.isNativePlatform();
-      console.log('[isNativeApp] Capacitor module check:', isNative);
-      return isNative;
+      return Capacitor.isNativePlatform();
     }
     // Fallback: check if window.Capacitor exists AND reports native platform
     const windowCap = (window as any).Capacitor;
     if (windowCap && typeof windowCap.isNativePlatform === 'function') {
-      const isNative = windowCap.isNativePlatform();
-      console.log('[isNativeApp] window.Capacitor check:', isNative);
-      return isNative;
+      return windowCap.isNativePlatform();
     }
-    console.log('[isNativeApp] No Capacitor found, returning false');
     return false;
-  } catch (e) {
-    console.log('[isNativeApp] Error:', e);
+  } catch {
     return false;
   }
 };
@@ -103,40 +94,38 @@ export const setupDeepLinkListener = (onAuthCallback: () => void) => {
 
   let listenerHandle: { remove: () => void } | null = null;
   let isSetup = false;
+  let isCancelled = false;
 
   const setup = async () => {
-    if (isSetup) return;
+    if (isSetup || isCancelled) return;
     isSetup = true;
 
     const app = await initApp();
     const browser = await initBrowser();
-    
-    if (!app) {
-      console.log('App plugin not available for deep links');
+
+    if (!app || isCancelled) {
       return;
     }
 
     try {
       const handle = await app.addListener('appUrlOpen', async ({ url }) => {
-        console.log('Deep link received:', url);
-        
         // Check if this is an auth callback
         if (url.includes('auth-callback')) {
           // Close the browser if available
           if (browser) {
             try {
               await browser.close();
-            } catch (e) {
-              console.log('Could not close browser:', e);
+            } catch {
+              // Browser may already be closed
             }
           }
-          
+
           // Extract tokens from the URL if present
           try {
             const urlObj = new URL(url);
             const accessToken = urlObj.searchParams.get('access_token');
             const refreshToken = urlObj.searchParams.get('refresh_token');
-            
+
             // If we have tokens in URL params, set the session
             if (accessToken && refreshToken) {
               await supabase.auth.setSession({
@@ -144,13 +133,13 @@ export const setupDeepLinkListener = (onAuthCallback: () => void) => {
                 refresh_token: refreshToken,
               });
             }
-            
+
             // Also check for hash fragments (some OAuth flows use this)
             if (url.includes('#')) {
               const hashParams = new URLSearchParams(url.split('#')[1]);
               const hashAccessToken = hashParams.get('access_token');
               const hashRefreshToken = hashParams.get('refresh_token');
-              
+
               if (hashAccessToken && hashRefreshToken) {
                 await supabase.auth.setSession({
                   access_token: hashAccessToken,
@@ -161,11 +150,17 @@ export const setupDeepLinkListener = (onAuthCallback: () => void) => {
           } catch (e) {
             console.error('Error processing auth callback URL:', e);
           }
-          
+
           onAuthCallback();
         }
       });
-      
+
+      // If cancelled during async setup, clean up immediately
+      if (isCancelled) {
+        handle.remove();
+        return;
+      }
+
       listenerHandle = handle;
     } catch (error) {
       console.error('Error setting up deep link listener:', error);
@@ -176,6 +171,7 @@ export const setupDeepLinkListener = (onAuthCallback: () => void) => {
   setup();
 
   return () => {
+    isCancelled = true;
     listenerHandle?.remove();
   };
 };
