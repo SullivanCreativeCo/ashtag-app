@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.f5a9ea032a734da8aa016e381def1c2e',
-  appName: 'ashtagapp',
+  appName: 'AshTag',
   webDir: 'dist',
   plugins: {
     App: {

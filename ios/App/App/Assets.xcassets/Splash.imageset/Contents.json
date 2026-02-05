@@ -1,0 +1,23 @@
+{
+  "images" : [
+    {
+      "filename" : "Ashtag(1024 x 1024 px) (2).png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "Ashtag(1024 x 1024 px) (3).png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "Untitled design (8).png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
