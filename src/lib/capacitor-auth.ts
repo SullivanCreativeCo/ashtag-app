@@ -1,62 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
-
-// Lazy load Capacitor modules to prevent crashes on startup
-let Capacitor: typeof import('@capacitor/core').Capacitor | null = null;
-let Browser: typeof import('@capacitor/browser').Browser | null = null;
-let CapacitorApp: typeof import('@capacitor/app').App | null = null;
-
-// Initialize Capacitor modules safely
-const initCapacitor = async () => {
-  try {
-    if (!Capacitor) {
-      const capacitorCore = await import('@capacitor/core');
-      Capacitor = capacitorCore.Capacitor;
-    }
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const initBrowser = async () => {
-  try {
-    if (!Browser) {
-      const browserModule = await import('@capacitor/browser');
-      Browser = browserModule.Browser;
-    }
-    return Browser;
-  } catch {
-    return null;
-  }
-};
-
-const initApp = async () => {
-  try {
-    if (!CapacitorApp) {
-      const appModule = await import('@capacitor/app');
-      CapacitorApp = appModule.App;
-    }
-    return CapacitorApp;
-  } catch {
-    return null;
-  }
-};
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { App as CapacitorApp } from '@capacitor/app';
 
 // Check if we're running in a native Capacitor app
 // IMPORTANT: This must be strict to avoid false positives on web/custom domains.
 // On web, window.Capacitor may still exist from the npm package, but isNativePlatform() should be false.
 export const isNativeApp = (): boolean => {
   try {
-    // Prefer the already-loaded module if available
-    if (Capacitor) {
-      return Capacitor.isNativePlatform();
-    }
-    // Fallback: check if window.Capacitor exists AND reports native platform
-    const windowCap = (window as any).Capacitor;
-    if (windowCap && typeof windowCap.isNativePlatform === 'function') {
-      return windowCap.isNativePlatform();
-    }
-    return false;
+    return Capacitor.isNativePlatform();
   } catch {
     return false;
   }
@@ -64,9 +16,9 @@ export const isNativeApp = (): boolean => {
 
 // Handle OAuth for native apps using the Browser plugin
 export const handleNativeGoogleAuth = async () => {
-  const browser = await initBrowser();
-  if (!browser) {
-    throw new Error('Browser plugin not available');
+  // Verify we're on a native platform
+  if (!isNativeApp()) {
+    throw new Error('Native OAuth is only available in the mobile app');
   }
 
   // Get the OAuth URL from Supabase
@@ -82,7 +34,7 @@ export const handleNativeGoogleAuth = async () => {
   if (!data.url) throw new Error('No OAuth URL returned');
 
   // Open the OAuth URL in the system browser
-  await browser.open({ url: data.url });
+  await Browser.open({ url: data.url });
 };
 
 // Set up deep link listener for OAuth callbacks
@@ -93,31 +45,20 @@ export const setupDeepLinkListener = (onAuthCallback: () => void) => {
   }
 
   let listenerHandle: { remove: () => void } | null = null;
-  let isSetup = false;
   let isCancelled = false;
 
   const setup = async () => {
-    if (isSetup || isCancelled) return;
-    isSetup = true;
-
-    const app = await initApp();
-    const browser = await initBrowser();
-
-    if (!app || isCancelled) {
-      return;
-    }
+    if (isCancelled) return;
 
     try {
-      const handle = await app.addListener('appUrlOpen', async ({ url }) => {
+      const handle = await CapacitorApp.addListener('appUrlOpen', async ({ url }) => {
         // Check if this is an auth callback
         if (url.includes('auth-callback')) {
-          // Close the browser if available
-          if (browser) {
-            try {
-              await browser.close();
-            } catch {
-              // Browser may already be closed
-            }
+          // Close the browser
+          try {
+            await Browser.close();
+          } catch {
+            // Browser may already be closed
           }
 
           // Extract tokens from the URL if present
@@ -167,7 +108,7 @@ export const setupDeepLinkListener = (onAuthCallback: () => void) => {
     }
   };
 
-  // Run setup asynchronously
+  // Run setup
   setup();
 
   return () => {
