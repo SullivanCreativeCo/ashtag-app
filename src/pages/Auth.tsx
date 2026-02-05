@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { setRememberDevicePreference } from "@/lib/session-storage";
-import { signInWithLovableOAuthPopup, isInIframe } from "@/lib/lovable-oauth";
+import { isInIframe } from "@/lib/lovable-oauth";
 import { isNativeApp } from "@/lib/capacitor-auth";
 
 type AuthMode = "login" | "signup" | "forgot-password";
@@ -63,48 +63,35 @@ export default function Auth() {
 
     try {
       // Check if we're in an iframe (Lovable preview)
-      if (isInIframe() && provider === "google") {
+      if (isInIframe()) {
         toast({
           title: "Unable to sign in",
-          description: "Google sign-in is not available in preview mode. Please use email/password or open in a new tab.",
+          description: "Social sign-in is not available in preview mode. Please use email/password or open in a new tab.",
           variant: "destructive",
         });
         setOauthLoading(null);
         return;
       }
 
-      // Use Lovable OAuth popup for web
-      const result = await signInWithLovableOAuthPopup(provider);
+      // Use Supabase's built-in OAuth flow
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth`,
+        },
+      });
 
-      if (result.error) {
-        throw result.error;
-      }
+      if (error) throw error;
 
-      if (result.tokens) {
-        // Set the session with the received tokens
-        const { error } = await supabase.auth.setSession({
-          access_token: result.tokens.access_token,
-          refresh_token: result.tokens.refresh_token,
-        });
-
-        if (error) throw error;
-
-        toast({
-          title: "Signed in!",
-          description: "Welcome to AshTag.",
-        });
-      }
+      // The page will redirect to the OAuth provider
+      // After successful auth, user will be redirected back
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Sign in failed";
-      // Don't show error for user cancellation
-      if (!errorMessage.includes("cancelled")) {
-        toast({
-          title: "Sign in failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
-    } finally {
+      toast({
+        title: "Sign in failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
       setOauthLoading(null);
     }
   };
