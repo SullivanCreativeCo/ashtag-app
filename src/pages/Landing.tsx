@@ -22,12 +22,6 @@ const Landing = () => {
     }
   ];
 
-  const stats = [
-    { value: "500+", label: "Cigar Profiles" },
-    { value: "Social", label: "Community" },
-    { value: "Free", label: "To Use" }
-  ];
-
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}

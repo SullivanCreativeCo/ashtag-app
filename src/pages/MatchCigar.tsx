@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CigarMatchResults } from "@/components/CigarMatchResults";
 import { CameraCapture } from "@/components/CameraCapture";
@@ -27,8 +27,6 @@ interface MatchResult {
 export default function MatchCigar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
-
   const [capturedImage, setCapturedImage] = useState<string | null>(
     location.state?.capturedImage || null,
   );
@@ -60,10 +58,7 @@ export default function MatchCigar() {
       setMatchResult(data);
 
       if (data?.identified && data?.matches?.length > 0 && data.matches[0].confidence >= 85) {
-        toast({
-          title: "Cigar identified!",
-          description: `${data.matches[0].brand} ${data.matches[0].line}`,
-        });
+        toast.success(`${data.matches[0].brand} ${data.matches[0].line}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to analyze image");

@@ -56,11 +56,12 @@ function startWebMessageListener({
   const callback = (e: MessageEvent) => {
     if (e.origin !== supportedOrigin) return;
 
-    const data = e.data as any;
+    const data = e.data as unknown;
     if (!data || typeof data !== "object") return;
-    if (data.type !== EXPECTED_MESSAGE_TYPE) return;
+    const payload = data as { type?: string; response?: OAuthResponse };
+    if (payload.type !== EXPECTED_MESSAGE_TYPE) return;
 
-    resolvePromise(data.response as OAuthResponse);
+    resolvePromise(payload.response as OAuthResponse);
   };
 
   window.addEventListener("message", callback);

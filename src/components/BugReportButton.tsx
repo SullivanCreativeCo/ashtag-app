@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
@@ -26,18 +26,13 @@ export function BugReportButton() {
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   const { user, profile } = useAuth();
 
   const handleSubmit = async () => {
     const validation = bugReportSchema.safeParse({ description });
 
     if (!validation.success) {
-      toast({
-        title: "Invalid input",
-        description: validation.error.errors[0].message,
-        variant: "destructive",
-      });
+      toast.error(validation.error.errors[0].message);
       return;
     }
 
@@ -56,20 +51,13 @@ export function BugReportButton() {
 
       if (error) throw error;
 
-      toast({
-        title: "Bug report sent!",
-        description: "Thanks for helping us improve the app.",
-      });
+      toast.success("Bug report sent! Thanks for helping us improve the app.");
 
       setDescription("");
       setOpen(false);
     } catch (error: unknown) {
       console.error("Failed to send bug report:", error);
-      toast({
-        title: "Failed to send report",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+      toast.error("Please try again later.");
     } finally {
       setIsSubmitting(false);
     }

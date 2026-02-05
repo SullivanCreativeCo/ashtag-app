@@ -3,6 +3,7 @@ import { Check, AlertCircle, ChevronRight, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AddCigarSheet } from "./AddCigarSheet";
+import type { SuggestedCigar } from "@/types/cigar";
 
 interface CigarMatch {
   cigarId: string;
@@ -11,14 +12,6 @@ interface CigarMatch {
   vitola: string;
   confidence: number;
   matchReason: string;
-}
-
-interface SuggestedCigar {
-  brand: string | null;
-  line: string | null;
-  vitola: string | null;
-  wrapper: string | null;
-  origin: string | null;
 }
 
 interface MatchResult {

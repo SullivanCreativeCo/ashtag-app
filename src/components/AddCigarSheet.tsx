@@ -17,17 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-
-interface SuggestedCigar {
-  brand: string | null;
-  line: string | null;
-  vitola: string | null;
-  wrapper: string | null;
-  origin: string | null;
-}
+import type { SuggestedCigar } from "@/types/cigar";
 
 interface AddCigarSheetProps {
   isOpen: boolean;
@@ -96,7 +89,6 @@ export function AddCigarSheet({
   capturedImage,
   onSuccess,
 }: AddCigarSheetProps) {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -113,20 +105,12 @@ export function AddCigarSheet({
     e.preventDefault();
     
     if (!brand.trim() || !line.trim()) {
-      toast({
-        title: "Missing fields",
-        description: "Brand and line are required",
-        variant: "destructive",
-      });
+      toast.error("Brand and line are required");
       return;
     }
 
     if (!user) {
-      toast({
-        title: "Not signed in",
-        description: "Please sign in to submit cigars",
-        variant: "destructive",
-      });
+      toast.error("Please sign in to submit cigars");
       return;
     }
 
@@ -170,19 +154,12 @@ export function AddCigarSheet({
       if (error) throw error;
 
       setSubmitted(true);
-      toast({
-        title: "Submitted for review!",
-        description: "An admin will review your submission shortly",
-      });
+      toast.success("Submitted for review! An admin will review your submission shortly.");
 
       onSuccess?.();
     } catch (error) {
       console.error("Error submitting cigar:", error);
-      toast({
-        title: "Failed to submit",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Please try again");
     } finally {
       setLoading(false);
     }

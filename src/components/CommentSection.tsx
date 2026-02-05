@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Send, Reply, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface Comment {

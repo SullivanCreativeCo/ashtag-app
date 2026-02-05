@@ -19,7 +19,7 @@ export function AppLayout({ children, showNav = true }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <main className="mx-auto max-w-lg px-4 pb-24 pt-16">
+      <main className="mx-auto max-w-lg px-4 pb-24 pt-24 safe-area-main">
         {children}
       </main>
       {showNav && <BottomNav />}

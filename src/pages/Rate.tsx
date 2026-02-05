@@ -9,26 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Search, Plus, Loader2, ArrowLeft, Camera, X, ImagePlus, Bookmark } from "lucide-react";
 import { CameraCapture } from "@/components/CameraCapture";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-
-interface Cigar {
-  id: string;
-  brand: string;
-  line: string;
-  vitola: string;
-  wrapper: string | null;
-  strength_profile: string | null;
-}
-
-interface BandImage {
-  id: string;
-  image_url: string;
-  is_primary: boolean | null;
-}
+import type { Cigar, BandImage } from "@/types/cigar";
 
 interface LocationState {
   capturedImage?: string;
@@ -52,7 +38,6 @@ export default function Rate() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const locationState = location.state as LocationState | null;
@@ -243,20 +228,12 @@ export default function Rate() {
 
   const handleSubmit = async () => {
     if (!selectedCigar) {
-      toast({
-        title: "Select a cigar",
-        description: "Please choose a cigar before saving a rating.",
-        variant: "destructive",
-      });
+      toast.error("Please choose a cigar before saving a rating.");
       return;
     }
 
     if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to save your rating.",
-        variant: "destructive",
-      });
+      toast.error("Please sign in to save your rating.");
       navigate("/auth");
       return;
     }
@@ -276,11 +253,7 @@ export default function Rate() {
 
       if (uploadError) {
         console.error("Photo upload error:", uploadError);
-        toast({
-          title: "Photo upload failed",
-          description: "Your rating will be saved without the photo.",
-          variant: "destructive",
-        });
+        toast.error("Photo upload failed. Your rating will be saved without the photo.");
       } else {
         const {
           data: { publicUrl },
@@ -310,16 +283,9 @@ export default function Rate() {
 
     if (error) {
       console.error("Smoke log insert error:", error, payload);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save your smoke log",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to save your smoke log");
     } else {
-      toast({
-        title: "Logged!",
-        description: "Your smoke log has been saved.",
-      });
+      toast.success("Your smoke log has been saved.");
       
       // Check if cigar is already favorited, if not show prompt
       if (selectedCigar && !isFavorite(selectedCigar.id)) {
@@ -336,11 +302,7 @@ export default function Rate() {
     if (!user || !searchQuery.trim()) return;
 
     if (searchQuery.length > 200) {
-      toast({
-        title: "Name too long",
-        description: "Cigar name must be under 200 characters",
-        variant: "destructive",
-      });
+      toast.error("Cigar name must be under 200 characters");
       return;
     }
 
@@ -350,16 +312,9 @@ export default function Rate() {
     });
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to submit request",
-        variant: "destructive",
-      });
+      toast.error("Failed to submit request");
     } else {
-      toast({
-        title: "Request submitted!",
-        description: "We'll review your cigar request",
-      });
+      toast.success("Request submitted! We'll review your cigar request.");
       setSearchQuery("");
     }
   };

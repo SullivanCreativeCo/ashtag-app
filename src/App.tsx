@@ -1,8 +1,7 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { StartupDiagnostics } from "@/components/StartupDiagnostics";
 import { isNativeApp } from "@/lib/capacitor-auth";
@@ -27,6 +26,13 @@ const queryClient = new QueryClient();
 // Component to handle landing page - redirects native apps to auth/feed
 const LandingRoute = () => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+
+  // If user landed on root with a password-recovery hash (e.g. from email link),
+  // send them to /auth so the Auth page can show "Set new password"
+  if (location.pathname === "/" && typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+    return <Navigate to={"/auth" + window.location.hash} replace />;
+  }
 
   // On native apps, skip the landing page entirely
   if (isNativeApp()) {
@@ -44,7 +50,6 @@ const App = () => (
     <StartupDiagnostics>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
           <Sonner />
           <BrowserRouter>
             <Routes>

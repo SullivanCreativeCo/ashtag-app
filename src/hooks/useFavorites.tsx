@@ -69,7 +69,7 @@ export function useFavorites() {
         toast.success(cigarName ? `${cigarName} saved to humidor!` : "Saved to humidor!");
       }
       return true;
-    } catch (error) {
+    } catch (_error) {
       // Revert on error
       setFavorites(prev => {
         const next = new Set(prev);

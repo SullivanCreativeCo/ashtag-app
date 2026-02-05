@@ -414,6 +414,11 @@
     padding-top: max(env(safe-area-inset-top, 0px), 12px);
   }
 
+  /* Main content top padding: clear fixed header (5rem) + safe area + small gap */
+  .safe-area-main {
+    padding-top: calc(5.5rem + max(env(safe-area-inset-top, 0px), 12px));
+  }
+
   /* Stagger animation for lists */
   .stagger-item {
     animation: stagger-fade-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,6 @@ import {
   MessageSquare,
   Globe,
   Cigarette,
-  Play,
   RefreshCw,
   Database,
   Zap,
@@ -126,7 +125,6 @@ const STRENGTH_OPTIONS = [
 export default function AdminBandImages() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -331,20 +329,13 @@ export default function AdminBandImages() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: "URLs Mapped!",
-        description: `Found ${data.cigarUrls} cigar pages. Added ${data.inserted} new URLs to queue.`,
-      });
+      toast.success(`Found ${data.cigarUrls} cigar pages. Added ${data.inserted} new URLs to queue.`);
 
       fetchScrapeSources();
       fetchQueueStats();
     } catch (error) {
       console.error("Map error:", error);
-      toast({
-        title: "Mapping failed",
-        description: error instanceof Error ? error.message : "Failed to map URLs",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to map URLs");
     } finally {
       setMappingSource(null);
     }
@@ -362,26 +353,16 @@ export default function AdminBandImages() {
       if (data?.error) throw new Error(data.error);
 
       if (continueInBackground) {
-        toast({
-          title: "Bulk processing started!",
-          description: `First batch: ${data.processed} items. Processing will continue in the background. Refresh to see progress.`,
-        });
+        toast.success(`First batch: ${data.processed} items. Processing will continue in the background. Refresh to see progress.`);
       } else {
-        toast({
-          title: "Batch processed!",
-          description: `Processed ${data.processed} items: ${data.inserted} inserted, ${data.duplicates} duplicates, ${data.failed} failed.`,
-        });
+        toast.success(`Processed ${data.processed} items: ${data.inserted} inserted, ${data.duplicates} duplicates, ${data.failed} failed.`);
       }
 
       fetchData();
       fetchQueueStats();
     } catch (error) {
       console.error("Process error:", error);
-      toast({
-        title: "Processing failed",
-        description: error instanceof Error ? error.message : "Failed to process queue",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to process queue");
     } finally {
       setProcessingQueue(false);
     }
@@ -396,18 +377,9 @@ export default function AdminBandImages() {
       .eq("id", requestId);
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update request status",
-        variant: "destructive",
-      });
+      toast.error("Failed to update request status");
     } else {
-      toast({
-        title: status === "approved" ? "Request Approved" : "Request Rejected",
-        description: status === "approved" 
-          ? "Don't forget to add the cigar to the database!" 
-          : "The request has been rejected",
-      });
+      toast.success(status === "approved" ? "Request Approved. Don't forget to add the cigar to the database!" : "Request Rejected. The request has been rejected.");
       fetchCigarRequests();
     }
     
@@ -419,11 +391,7 @@ export default function AdminBandImages() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file",
-        description: "Please select an image file",
-        variant: "destructive",
-      });
+      toast.error("Please select an image file");
       return;
     }
 
@@ -460,21 +428,14 @@ export default function AdminBandImages() {
 
       if (dbError) throw dbError;
 
-      toast({
-        title: "Image uploaded!",
-        description: "The cigar band image has been added",
-      });
+      toast.success("The cigar band image has been added");
 
       resetForm();
       fetchData();
       setDialogOpen(false);
     } catch (error) {
       console.error("Upload error:", error);
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setUploading(false);
     }
@@ -496,19 +457,12 @@ export default function AdminBandImages() {
 
       if (error) throw error;
 
-      toast({
-        title: "Image deleted",
-        description: "The cigar band image has been removed",
-      });
+      toast.success("The cigar band image has been removed");
 
       fetchData();
     } catch (error) {
       console.error("Delete error:", error);
-      toast({
-        title: "Delete failed",
-        description: "Failed to delete the image",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete the image");
     }
   };
 
@@ -526,11 +480,7 @@ export default function AdminBandImages() {
 
   const handleAddCigar = async () => {
     if (!newCigar.brand.trim() || !newCigar.line.trim() || !newCigar.vitola.trim()) {
-      toast({
-        title: "Missing fields",
-        description: "Brand, line, and vitola are required",
-        variant: "destructive",
-      });
+      toast.error("Brand, line, and vitola are required");
       return;
     }
 
@@ -549,21 +499,14 @@ export default function AdminBandImages() {
 
       if (error) throw error;
 
-      toast({
-        title: "Cigar added!",
-        description: `${newCigar.brand} ${newCigar.line} has been added to the database`,
-      });
+      toast.success(`${newCigar.brand} ${newCigar.line} has been added to the database`);
 
       setNewCigar({ brand: "", line: "", vitola: "", wrapper: "", origin: "", strength: "", size: "" });
       setAddCigarDialogOpen(false);
       fetchData();
     } catch (error) {
       console.error("Error adding cigar:", error);
-      toast({
-        title: "Failed to add cigar",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Please try again");
     } finally {
       setAddingCigar(false);
     }
@@ -571,11 +514,7 @@ export default function AdminBandImages() {
 
   const handleScrape = async () => {
     if (!scrapeQuery.trim()) {
-      toast({
-        title: "Enter a search term",
-        description: "Please enter a brand or cigar name to search",
-        variant: "destructive",
-      });
+      toast.error("Please enter a brand or cigar name to search");
       return;
     }
 
@@ -592,23 +531,13 @@ export default function AdminBandImages() {
 
       if (data?.cigars && data.cigars.length > 0) {
         setScrapedCigars(data.cigars);
-        toast({
-          title: "Found cigars!",
-          description: `Found ${data.cigars.length} cigars from Elite Cigar Library`,
-        });
+        toast.success(`Found ${data.cigars.length} cigars from Elite Cigar Library`);
       } else {
-        toast({
-          title: "No results",
-          description: "No cigars found for that search. Try a different term.",
-        });
+        toast("No results", { description: "No cigars found for that search. Try a different term." });
       }
     } catch (error) {
       console.error("Scrape error:", error);
-      toast({
-        title: "Scraping failed",
-        description: error instanceof Error ? error.message : "Failed to scrape website",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to scrape website");
     } finally {
       setScraping(false);
     }
@@ -632,10 +561,7 @@ export default function AdminBandImages() {
         .maybeSingle();
 
       if (existing) {
-        toast({
-          title: "Already exists",
-          description: `${brand} ${line} ${vitola} is already in the database`,
-        });
+        toast(`${brand} ${line} ${vitola} is already in the database`);
         return;
       }
 
@@ -650,19 +576,12 @@ export default function AdminBandImages() {
 
       if (error) throw error;
 
-      toast({
-        title: "Cigar imported!",
-        description: `${brand} ${line} has been added to the database`,
-      });
+      toast.success(`${brand} ${line} has been added to the database`);
 
       fetchData();
     } catch (error) {
       console.error("Import error:", error);
-      toast({
-        title: "Import failed",
-        description: error instanceof Error ? error.message : "Failed to import cigar",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to import cigar");
     } finally {
       setImportingIndex(null);
     }

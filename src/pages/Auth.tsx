@@ -6,43 +6,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { setRememberDevicePreference } from "@/lib/session-storage";
 
-type AuthMode = "login" | "signup" | "forgot-password";
+type AuthMode = "login" | "signup" | "forgot-password" | "set-new-password";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast();
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(() => {
+    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
+      return "set-new-password";
+    }
+    return "login";
+  });
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [ageVerified, setAgeVerified] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const hasNavigatedRef = useRef(false);
   const isSigningUpRef = useRef(false);
 
   useEffect(() => {
-    // Don't auto-redirect if we're in the middle of signup flow
-    if (user && !authLoading && !hasNavigatedRef.current && !isSigningUpRef.current) {
+    // Don't auto-redirect if we're in the middle of signup or setting new password after reset
+    if (user && !authLoading && !hasNavigatedRef.current && !isSigningUpRef.current && mode !== "set-new-password") {
       hasNavigatedRef.current = true;
       navigate("/feed", { replace: true });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, mode]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!ageVerified) {
-      toast({
-        title: "Age Verification Required",
-        description: "You must confirm you are 21 years or older to continue.",
-        variant: "destructive",
-      });
+      toast.error("You must confirm you are 21 years or older to continue.");
       return;
     }
 
@@ -76,20 +80,13 @@ export default function Auth() {
 
         if (error) throw error;
 
-        toast({
-          title: "Account created!",
-          description: "Let's set up your profile.",
-        });
+        toast.success("Account created! Let's set up your profile.");
         // Send new users to profile setup
         hasNavigatedRef.current = true;
         navigate("/profile/setup", { replace: true });
       }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -99,11 +96,7 @@ export default function Auth() {
     e.preventDefault();
 
     if (!email) {
-      toast({
-        title: "Email Required",
-        description: "Please enter your email address.",
-        variant: "destructive",
-      });
+      toast.error("Please enter your email address.");
       return;
     }
 
@@ -116,25 +109,44 @@ export default function Auth() {
 
       if (error) throw error;
 
-      toast({
-        title: "Check your email",
-        description: "We've sent you a password reset link. Please check your inbox.",
-      });
+      toast.success("Check your email. We've sent you a password reset link.");
 
       // Return to login mode after successful request
       setMode("login");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  if (authLoading) {
+  const handleSetNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords don't match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("Password updated. You can sign in with your new password.");
+      setNewPassword("");
+      setConfirmPassword("");
+      setMode("login");
+      window.history.replaceState(null, "", window.location.pathname);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to update password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading && mode !== "set-new-password") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -199,6 +211,87 @@ export default function Auth() {
     );
   }
 
+  // Set new password (after clicking reset link in email)
+  if (mode === "set-new-password") {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+          <div className="mb-8 text-center">
+            <h1 className="font-display text-5xl font-bold tracking-tight text-foreground">
+              Ash<span className="text-primary">Tag</span>
+            </h1>
+            <p className="mt-3 text-lg text-muted-foreground">
+              Set your new password
+            </p>
+          </div>
+
+          <div className="w-full max-w-sm space-y-6">
+            <form onSubmit={handleSetNewPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New password</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="bg-card pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+                    aria-label={showNewPassword ? "Hide password" : "Show password"}
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm new password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="bg-card"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-gradient-ember py-6 font-semibold shadow-ember disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Update password
+              </Button>
+            </form>
+
+            <button
+              type="button"
+              onClick={() => setMode("login")}
+              className="flex items-center justify-center gap-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to sign in
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Login / Signup View
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -246,26 +339,38 @@ export default function Auth() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                {mode === "login" && (
-                  <button
-                    type="button"
-                    onClick={() => setMode("forgot-password")}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Forgot password?
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot-password")}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
               </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="bg-card"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="bg-card pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-start space-x-3 pt-2 min-h-[44px] touch-manipulation">

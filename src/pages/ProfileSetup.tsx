@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, Camera, User } from "lucide-react";
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
   const { user, loading: authLoading, profile } = useAuth();
-  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [displayName, setDisplayName] = useState("");
@@ -47,21 +46,13 @@ export default function ProfileSetup() {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file",
-        description: "Please select an image file",
-        variant: "destructive",
-      });
+      toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please select an image under 5MB",
-        variant: "destructive",
-      });
+      toast.error("Please select an image under 5MB");
       return;
     }
 
@@ -97,11 +88,7 @@ export default function ProfileSetup() {
     if (!user) return;
 
     if (!displayName.trim()) {
-      toast({
-        title: "Display name required",
-        description: "Please enter a display name",
-        variant: "destructive",
-      });
+      toast.error("Please enter a display name");
       return;
     }
 
@@ -126,19 +113,12 @@ export default function ProfileSetup() {
 
       if (error) throw error;
 
-      toast({
-        title: "Profile created!",
-        description: "Welcome to Ash Tag",
-      });
+      toast.success("Profile created! Welcome to Ash Tag");
 
       navigate("/feed", { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Profile setup error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save profile",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to save profile");
     } finally {
       setSaving(false);
     }

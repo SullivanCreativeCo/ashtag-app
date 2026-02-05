@@ -10,40 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Flame, Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import type { SmokeLogWithDetails } from "@/types/smoke-log";
 
 interface ProfileData {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
   created_at: string;
-}
-
-interface SmokeLogWithDetails {
-  id: string;
-  smoked_at: string;
-  notes: string;
-  photo_url: string | null;
-  overall_score: number;
-  construction: number;
-  flavor: number;
-  strength: number;
-  burn: number;
-  created_at: string;
-  user_id: string;
-  cigar: {
-    id: string;
-    brand: string;
-    line: string;
-    vitola: string;
-  };
-  profile: {
-    id: string;
-    display_name: string | null;
-    avatar_url: string | null;
-  };
-  likes_count: number;
-  comments_count: number;
-  user_has_liked: boolean;
 }
 
 export default function Profile() {

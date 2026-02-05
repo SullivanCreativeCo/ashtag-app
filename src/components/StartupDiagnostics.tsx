@@ -65,7 +65,7 @@ class StartupErrorBoundary extends React.Component<
     return { hasError: true, errorState };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(_error: Error, _errorInfo: React.ErrorInfo) {
     // Error already captured in getDerivedStateFromError
     // Only call onError once, using a flag to prevent loops
     if (this.state.errorState && !this.state.errorState.reported) {
