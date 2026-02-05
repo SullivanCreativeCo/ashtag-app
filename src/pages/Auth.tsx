@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { setRememberDevicePreference } from "@/lib/session-storage";
 import { signInWithLovableOAuthPopup, isInIframe } from "@/lib/lovable-oauth";
-import { isNativeApp, handleNativeGoogleAuth, setupDeepLinkListener } from "@/lib/capacitor-auth";
+import { isNativeApp } from "@/lib/capacitor-auth";
 
 type AuthMode = "login" | "signup" | "forgot-password";
 
@@ -37,20 +37,6 @@ export default function Auth() {
     }
   }, [user, authLoading, navigate]);
 
-  // Set up deep link listener for native OAuth callbacks
-  useEffect(() => {
-    if (!isNativeApp()) return;
-
-    const cleanup = setupDeepLinkListener(() => {
-      // OAuth callback received, navigation will happen via auth state change
-      toast({
-        title: "Signed in!",
-        description: "Welcome to AshTag.",
-      });
-    });
-
-    return cleanup;
-  }, [toast]);
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     if (!ageVerified) {
@@ -62,17 +48,20 @@ export default function Auth() {
       return;
     }
 
+    // OAuth is not available in native apps - show message
+    if (isNativeApp()) {
+      toast({
+        title: "Use Email Sign In",
+        description: "Social sign-in is coming soon to the mobile app. Please use email/password for now.",
+        variant: "default",
+      });
+      return;
+    }
+
     setRememberDevicePreference(rememberDevice);
     setOauthLoading(provider);
 
     try {
-      // Use native OAuth for Capacitor apps
-      if (isNativeApp() && provider === "google") {
-        await handleNativeGoogleAuth();
-        // The deep link listener will handle the callback
-        return;
-      }
-
       // Check if we're in an iframe (Lovable preview)
       if (isInIframe() && provider === "google") {
         toast({
