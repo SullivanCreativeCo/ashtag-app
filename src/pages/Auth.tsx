@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,12 @@ type AuthMode = "login" | "signup" | "forgot-password" | "set-new-password";
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>(() => {
-    if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
-      return "set-new-password";
+    if (typeof window !== "undefined") {
+      if (window.location.hash.includes("type=recovery")) return "set-new-password";
+      if (window.location.search.includes("reset=true")) return "set-new-password";
     }
     return "login";
   });
@@ -33,14 +35,48 @@ export default function Auth() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const hasNavigatedRef = useRef(false);
   const isSigningUpRef = useRef(false);
+  const hasHandledExpiredRef = useRef(false);
+  const hasHandledResetParamRef = useRef(false);
+
+  // When user lands from password-reset email with ?reset=true (session may already be set by broker),
+  // show set-new-password form instead of redirecting to feed
+  useEffect(() => {
+    if (hasHandledResetParamRef.current || authLoading) return;
+    if (searchParams.get("reset") === "true" && user) {
+      hasHandledResetParamRef.current = true;
+      setMode("set-new-password");
+      setSearchParams({}, { replace: true });
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    }
+  }, [authLoading, user, searchParams, setSearchParams]);
+
+  // When user lands with expired/invalid reset link, show forgot-password and a message
+  useEffect(() => {
+    if (hasHandledExpiredRef.current) return;
+    const resetError = searchParams.get("reset_error");
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const hasExpiredHash = hash.includes("error_code=otp_expired") || hash.includes("error=access_denied");
+    if (resetError === "expired" || hasExpiredHash) {
+      hasHandledExpiredRef.current = true;
+      setMode("forgot-password");
+      toast.error("This link has expired. Please request a new password reset link below.");
+      setSearchParams({}, { replace: true });
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     // Don't auto-redirect if we're in the middle of signup or setting new password after reset
-    if (user && !authLoading && !hasNavigatedRef.current && !isSigningUpRef.current && mode !== "set-new-password") {
+    const isResetFlow = mode === "set-new-password" || searchParams.get("reset") === "true";
+    if (user && !authLoading && !hasNavigatedRef.current && !isSigningUpRef.current && !isResetFlow) {
       hasNavigatedRef.current = true;
       navigate("/feed", { replace: true });
     }
-  }, [user, authLoading, navigate, mode]);
+  }, [user, authLoading, navigate, mode, searchParams]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +145,14 @@ export default function Auth() {
 
       if (error) throw error;
 
-      toast.success("Check your email. We've sent you a password reset link.");
+      // So we can redirect to set-new-password when they click the email link (localStorage = works across tabs)
+      try {
+        localStorage.setItem("pendingPasswordReset", Date.now().toString());
+      } catch {
+        /* ignore */
+      }
+
+      toast.success("Check your email. Open the link in this same browser to set your new password.");
 
       // Return to login mode after successful request
       setMode("login");
@@ -135,6 +178,11 @@ export default function Auth() {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       toast.success("Password updated. You can sign in with your new password.");
+      try {
+        localStorage.removeItem("pendingPasswordReset");
+      } catch {
+        /* ignore */
+      }
       setNewPassword("");
       setConfirmPassword("");
       setMode("login");

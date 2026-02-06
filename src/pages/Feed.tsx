@@ -18,7 +18,53 @@ import type { SmokeLogWithDetails } from "@/types/smoke-log";
 
 type FeedFilter = "all" | "friends";
 
+const PENDING_RESET_KEY = "pendingPasswordReset";
+const PENDING_RESET_MAX_AGE_MS = 60 * 60 * 1000;
+
+function isPendingPasswordResetValid(): boolean {
+  try {
+    const raw = localStorage.getItem(PENDING_RESET_KEY);
+    if (!raw) return false;
+    const ts = parseInt(raw, 10);
+    if (Number.isNaN(ts) || Date.now() - ts > PENDING_RESET_MAX_AGE_MS) {
+      localStorage.removeItem(PENDING_RESET_KEY);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Wrapper: if user landed from password-reset link, redirect to set-new-password and never show feed */
 export default function Feed() {
+  if (typeof window === "undefined") return <FeedContent />;
+
+  // Broker sometimes sends reset link to /feed with token in hash; send to Auth and preserve hash
+  const hash = window.location.hash;
+  if (hash.includes("type=recovery")) {
+    const to = "/auth?reset=true" + hash;
+    window.location.replace(to);
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Taking you to set your new password…</p>
+      </div>
+    );
+  }
+
+  if (isPendingPasswordResetValid()) {
+    localStorage.removeItem(PENDING_RESET_KEY);
+    window.location.replace("/auth?reset=true");
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Taking you to set your new password…</p>
+      </div>
+    );
+  }
+  return <FeedContent />;
+}
+
+function FeedContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();

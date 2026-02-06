@@ -31,7 +31,44 @@ const LandingRoute = () => {
   // If user landed on root with a password-recovery hash (e.g. from email link),
   // send them to /auth so the Auth page can show "Set new password"
   if (location.pathname === "/" && typeof window !== "undefined" && window.location.hash.includes("type=recovery")) {
-    return <Navigate to={"/auth" + window.location.hash} replace />;
+    return <Navigate to={"/auth?reset=true" + window.location.hash} replace />;
+  }
+
+  // If user landed on root with ?reset=true (broker may have redirected here), send to /auth so they can set a new password
+  if (location.pathname === "/" && typeof window !== "undefined" && location.search.includes("reset=true")) {
+    const to = "/auth" + location.search + window.location.hash;
+    return <Navigate to={to} replace />;
+  }
+
+  // If user landed with an expired/invalid reset link (e.g. otp_expired from email),
+  // send them to /auth with a clear error so they can request a new link
+  if (location.pathname === "/" && typeof window !== "undefined") {
+    const hash = window.location.hash;
+    if (hash.includes("error_code=otp_expired") || hash.includes("error=access_denied")) {
+      return <Navigate to="/auth?reset_error=expired" replace />;
+    }
+  }
+
+  // If user just clicked the password-reset email link but broker sent them to root, never show landing — redirect to set-new-password
+  if (location.pathname === "/" && user && typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem("pendingPasswordReset");
+      if (raw) {
+        const ts = parseInt(raw, 10);
+        if (!Number.isNaN(ts) && Date.now() - ts <= 60 * 60 * 1000) {
+          localStorage.removeItem("pendingPasswordReset");
+          window.location.replace("/auth?reset=true");
+          return (
+            <div className="flex min-h-screen items-center justify-center bg-background">
+              <p className="text-muted-foreground">Taking you to set your new password…</p>
+            </div>
+          );
+        }
+        localStorage.removeItem("pendingPasswordReset");
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   // On native apps, skip the landing page entirely
